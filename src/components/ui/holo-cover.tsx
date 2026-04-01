@@ -395,7 +395,7 @@ export function HoloCover({
             gl={{ antialias: true, alpha: false }}
             camera={{ position: [0, 0, 1], fov: 50 }}
             style={{ width: "100%", height: "100%" }}
-            dpr={Math.min(window.devicePixelRatio, 2)}
+            dpr={typeof window !== "undefined" ? Math.min(window.devicePixelRatio, 2) : 1}
           >
             <HoloPlane
               src={src}
