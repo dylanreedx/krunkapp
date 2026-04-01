@@ -262,22 +262,12 @@ function ShareLink({ queueId }: { queueId: string }) {
 /* AI Preview — generate name + cover, with ONE reroll                 */
 /* ------------------------------------------------------------------ */
 
-const DICE_MESSAGES = [
-  "Could be fire. Could be cursed.",
-  "Feeling lucky?",
-  "No takebacks after this one.",
-  "The AI gods decide your fate.",
-  "Roll the dice on your cover art.",
-  "Better or worse — who knows.",
-] as const;
+type ObscureStyle = "heavy" | "medium" | "peek";
 
-type BlurStyle = "squiggle" | "mosaic" | "swirl" | "none";
-
-const BLUR_STYLES: { id: BlurStyle; label: string; filter: string }[] = [
-  { id: "squiggle", label: "Squiggle", filter: "url(#squiggle) saturate(1.3)" },
-  { id: "mosaic", label: "Mosaic", filter: "url(#mosaic) contrast(1.1)" },
-  { id: "swirl", label: "Swirl", filter: "url(#swirl) saturate(1.2)" },
-  { id: "none", label: "Clear", filter: "none" },
+const OBSCURE_STYLES: { id: ObscureStyle; label: string }[] = [
+  { id: "heavy", label: "Hidden" },
+  { id: "medium", label: "Glimpse" },
+  { id: "peek", label: "Peek" },
 ];
 
 function AiPreview({
@@ -295,16 +285,16 @@ function AiPreview({
     aiName: string;
     coverImageUrl?: string;
   } | null>(
-    initialAiName ? { aiName: initialAiName, coverImageUrl: initialCoverUrl ?? undefined } : null,
+    initialAiName
+      ? { aiName: initialAiName, coverImageUrl: initialCoverUrl ?? undefined }
+      : null,
   );
   const [loading, setLoading] = useState(false);
   const [hasRerolled, setHasRerolled] = useState(false);
   const [showRerollConfirm, setShowRerollConfirm] = useState(false);
-  const [rerollMessage] = useState(
-    () => DICE_MESSAGES[Math.floor(Math.random() * DICE_MESSAGES.length)],
-  );
-  const [blurStyle, setBlurStyle] = useState<BlurStyle>("squiggle");
+  const [obscure, setObscure] = useState<ObscureStyle>("heavy");
   const [flipAnim, setFlipAnim] = useState(false);
+  const [shakeAnim, setShakeAnim] = useState(false);
 
   const previewAI = api.queue.previewAI.useMutation({
     onMutate: () => setLoading(true),
@@ -312,7 +302,7 @@ function AiPreview({
       setPreview(data);
       setLoading(false);
       setFlipAnim(true);
-      setTimeout(() => setFlipAnim(false), 600);
+      setTimeout(() => setFlipAnim(false), 700);
     },
     onError: () => setLoading(false),
   });
@@ -325,34 +315,23 @@ function AiPreview({
   const handleReroll = useCallback(() => {
     setShowRerollConfirm(false);
     setHasRerolled(true);
-    previewAI.mutate({ queueId });
+    setShakeAnim(true);
+    setTimeout(() => {
+      setShakeAnim(false);
+      previewAI.mutate({ queueId });
+    }, 600);
   }, [previewAI, queueId]);
 
-  const currentFilter =
-    BLUR_STYLES.find((s) => s.id === blurStyle)?.filter ?? "none";
+  // CSS blur + scale to truly obscure the image
+  const obscureCSS: Record<ObscureStyle, string> = {
+    heavy: "blur-[20px] scale-[1.3] saturate-[1.8] brightness-[0.7]",
+    medium: "blur-[10px] scale-[1.15] saturate-[1.4]",
+    peek: "blur-[4px] scale-[1.05] saturate-[1.2]",
+  };
 
   return (
     <section className="mb-9 animate-[fade-up_0.5s_ease-out_0.65s_both]">
-      {/* SVG filters */}
-      <svg className="absolute h-0 w-0" aria-hidden>
-        <defs>
-          <filter id="squiggle">
-            <feTurbulence baseFrequency="0.015" numOctaves="3" seed="2" result="n" />
-            <feDisplacementMap in="SourceGraphic" in2="n" scale="18" xChannelSelector="R" yChannelSelector="G" />
-          </filter>
-          <filter id="mosaic">
-            <feMorphology in="SourceGraphic" operator="dilate" radius="3" result="d" />
-            <feGaussianBlur in="d" stdDeviation="2.5" />
-          </filter>
-          <filter id="swirl">
-            <feTurbulence type="fractalNoise" baseFrequency="0.01" numOctaves="2" seed="5" result="n" />
-            <feDisplacementMap in="SourceGraphic" in2="n" scale="30" xChannelSelector="R" yChannelSelector="B" />
-            <feGaussianBlur stdDeviation="1" />
-          </filter>
-        </defs>
-      </svg>
-
-      <Card className="rotate-[-0.6deg] overflow-visible">
+      <Card className="rotate-[-0.6deg] overflow-hidden">
         {/* Not generated yet */}
         {!preview && !loading && (
           <div className="flex items-center gap-4 max-sm:flex-col max-sm:text-center">
@@ -378,7 +357,7 @@ function AiPreview({
           </div>
         )}
 
-        {/* Loading state */}
+        {/* Loading */}
         {loading && (
           <div className="flex items-center gap-4 max-sm:flex-col max-sm:text-center">
             <div className="flex h-[72px] w-[72px] shrink-0 items-center justify-center rounded-[14px] border-3 border-black bg-gray-50 max-sm:mx-auto">
@@ -386,30 +365,35 @@ function AiPreview({
             </div>
             <div className="flex-1">
               <p className="font-display text-sm font-bold">
-                {hasRerolled ? "Rerolling..." : "Generating..."}
+                {hasRerolled ? "Rerolling the dice..." : "Cooking up your cover..."}
               </p>
               <p className="mt-0.5 font-body text-xs text-gray-400">
-                Analyzing album art & creating cover (~30s)
+                Analyzing your songs & generating art (~30s)
               </p>
             </div>
           </div>
         )}
 
-        {/* Preview result */}
+        {/* Result */}
         {preview && !loading && (
           <div>
             <div className="flex items-start gap-4 max-sm:flex-col max-sm:items-center max-sm:text-center">
-              {/* Cover art with filter */}
+              {/* Cover art — heavily obscured by default */}
               <div
-                className={`relative h-[100px] w-[100px] shrink-0 overflow-hidden rounded-[16px] border-3 border-black max-sm:mx-auto ${flipAnim ? "animate-[flip_0.6s_ease-out]" : ""}`}
+                className={`relative h-[110px] w-[110px] shrink-0 overflow-hidden rounded-[18px] border-3 border-black max-sm:mx-auto ${flipAnim ? "animate-[flip_0.7s_ease-out]" : ""} ${shakeAnim ? "animate-[shake_0.5s_ease-in-out]" : ""}`}
               >
                 {preview.coverImageUrl ? (
-                  <img
-                    src={preview.coverImageUrl}
-                    alt="AI preview"
-                    className="h-full w-full object-cover transition-[filter] duration-500"
-                    style={{ filter: currentFilter }}
-                  />
+                  <>
+                    <img
+                      src={preview.coverImageUrl}
+                      alt=""
+                      className={`h-full w-full object-cover transition-all duration-700 ${obscureCSS[obscure]}`}
+                    />
+                    {/* Color overlay on heavy blur for extra mystery */}
+                    {obscure === "heavy" && (
+                      <div className="absolute inset-0 bg-black/20 mix-blend-overlay" />
+                    )}
+                  </>
                 ) : (
                   <div className="flex h-full w-full items-center justify-center bg-gray-100">
                     <Sparkle weight="duotone" size={32} className="text-gray-300" />
@@ -422,19 +406,19 @@ function AiPreview({
                   &ldquo;{preview.aiName}&rdquo;
                 </p>
                 <p className="mt-1 font-body text-xs text-gray-500">
-                  AI-generated &middot; full reveal on drop day
+                  Full reveal on drop day
                 </p>
 
-                {/* Blur style pills */}
+                {/* Obscure level pills */}
                 {preview.coverImageUrl && (
                   <div className="mt-3 flex flex-wrap gap-1.5">
-                    {BLUR_STYLES.map((style) => (
+                    {OBSCURE_STYLES.map((style) => (
                       <button
                         key={style.id}
                         type="button"
-                        onClick={() => setBlurStyle(style.id)}
-                        className={`rounded-full px-3 py-1 font-display text-[10px] font-bold transition-all ${
-                          blurStyle === style.id
+                        onClick={() => setObscure(style.id)}
+                        className={`rounded-full px-3 py-1.5 font-display text-[10px] font-bold transition-all ${
+                          obscure === style.id
                             ? "bg-pink text-white"
                             : "border-2 border-gray-200 bg-white text-gray-500 hover:border-pink hover:text-pink"
                         }`}
@@ -445,48 +429,50 @@ function AiPreview({
                   </div>
                 )}
 
-                {/* Reroll section */}
+                {/* Reroll — dramatic, scarce */}
                 {!hasRerolled && !showRerollConfirm && (
                   <button
                     type="button"
                     onClick={() => setShowRerollConfirm(true)}
-                    className="mt-3 inline-flex items-center gap-1.5 font-display text-[11px] font-bold text-gray-400 transition-colors hover:text-pink"
+                    className="mt-4 inline-flex items-center gap-2 rounded-[var(--radius-md)] border-2 border-dashed border-gray-300 px-3.5 py-2 font-display text-[11px] font-bold text-gray-400 transition-all hover:border-pink hover:text-pink"
                   >
-                    🎲 Reroll
+                    <Sparkle weight="bold" size={12} />
+                    Reroll (1 left)
                   </button>
                 )}
 
                 {hasRerolled && (
-                  <p className="mt-3 font-body text-[11px] text-gray-400">
-                    ✓ No more rerolls — this is your destiny
+                  <p className="mt-4 font-display text-[11px] font-bold text-gray-300">
+                    No rerolls left
                   </p>
                 )}
               </div>
             </div>
 
-            {/* Reroll confirmation overlay */}
+            {/* Reroll confirmation — feels consequential */}
             {showRerollConfirm && (
-              <div className="mt-4 rounded-[var(--radius-lg)] border-3 border-dashed border-pink bg-pink/5 p-4 text-center">
-                <p className="font-display text-sm font-black">
-                  🎲 {rerollMessage}
+              <div className="mt-5 rounded-[var(--radius-lg)] border-3 border-pink bg-pink/5 p-5">
+                <p className="font-display text-base font-black text-black">
+                  Are you sure?
                 </p>
-                <p className="mt-1 font-body text-xs text-gray-500">
-                  You get ONE reroll. New name, new art. No going back.
+                <p className="mt-1 font-body text-sm text-gray-600">
+                  This will destroy your current cover and name.
+                  You&apos;ll get a completely new one. No going back.
                 </p>
-                <div className="mt-3 flex justify-center gap-2">
+                <div className="mt-4 flex gap-2">
                   <button
                     type="button"
                     onClick={handleReroll}
                     className="rounded-[var(--radius-md)] bg-pink px-5 py-2.5 font-display text-xs font-bold text-white transition-all active:scale-[0.97]"
                   >
-                    🎲 Roll it
+                    Destroy & reroll
                   </button>
                   <button
                     type="button"
                     onClick={() => setShowRerollConfirm(false)}
                     className="rounded-[var(--radius-md)] border-3 border-black bg-white px-5 py-2.5 font-display text-xs font-bold transition-all active:scale-[0.97]"
                   >
-                    Keep this one
+                    Keep it
                   </button>
                 </div>
               </div>
@@ -495,13 +481,19 @@ function AiPreview({
         )}
       </Card>
 
-      {/* Flip animation keyframe */}
       <style>{`
         @keyframes flip {
           0% { transform: perspective(400px) rotateY(90deg); opacity: 0; }
           40% { transform: perspective(400px) rotateY(-10deg); }
           70% { transform: perspective(400px) rotateY(5deg); }
           100% { transform: perspective(400px) rotateY(0deg); opacity: 1; }
+        }
+        @keyframes shake {
+          0%, 100% { transform: translateX(0) rotate(-0.6deg); }
+          20% { transform: translateX(-8px) rotate(-2deg); }
+          40% { transform: translateX(8px) rotate(1.5deg); }
+          60% { transform: translateX(-5px) rotate(-1deg); }
+          80% { transform: translateX(5px) rotate(0.5deg); }
         }
       `}</style>
     </section>
