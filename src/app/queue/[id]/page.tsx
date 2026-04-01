@@ -9,6 +9,7 @@ import { getSession } from "@/server/better-auth/server";
 import { QueueCover } from "./_components/queue-cover";
 import { QueueContent } from "./_components/queue-content";
 import { SignInCta } from "./_components/sign-in-cta";
+import { DraftPreview } from "./_components/draft-preview";
 
 type Props = {
   params: Promise<{ id: string }>;
@@ -25,7 +26,7 @@ async function getQueue(id: string) {
     },
   });
 
-  if (!result || result.status !== "published") return null;
+  if (!result) return null;
 
   const creator = await db.query.user.findFirst({
     where: eq(user.id, result.creatorId),
@@ -90,51 +91,62 @@ export default async function QueueViewPage({ params }: Props) {
     day: "numeric",
   });
 
+  const isDraft = data.status === "draft";
+
   return (
     <main className="relative min-h-screen bg-white">
-      {/* Dot grid background */}
       <div className="dot-grid pointer-events-none fixed inset-0 z-0 opacity-[0.04]" />
 
       <div className="relative z-[1] mx-auto max-w-[520px] px-5 pb-24 pt-4 safe-area-top md:max-w-[560px]">
-        {/* Top bar */}
         <header className="flex items-center justify-center py-4">
           <span className="font-display text-[1.3rem] font-black tracking-tight">
             krun<span className="text-pink">k</span>
           </span>
         </header>
 
-        {/* Cover hero */}
-        <QueueCover
-          aiName={data.aiName}
-          aiCoverUrl={data.aiCoverUrl}
-          senderName={senderName}
-          senderAvatarId={senderAvatarId}
-          songCount={data.songs.length}
-          weekDate={formattedWeek}
-        />
-
-        {/* Interactive song views (client boundary) */}
-        <QueueContent
-          queueId={id}
-          songs={data.songs}
-          isLoggedIn={isLoggedIn}
-          senderName={senderName}
-          senderAvatarId={senderAvatarId}
-          platform={
-            (session?.user as { platformPreference?: string } | undefined)
-              ?.platformPreference as "spotify" | "apple_music" | undefined
-          }
-        />
-
-        {/* Sign-in CTA for unauthenticated users */}
-        {!isLoggedIn && (
-          <SignInCta
+        {isDraft ? (
+          /* ---- Draft: blurred anticipation view ---- */
+          <DraftPreview
             senderName={senderName}
             senderAvatarId={senderAvatarId}
+            aiCoverUrl={data.aiCoverUrl}
+            songCount={data.songs.length}
+            weekDate={formattedWeek}
+            isLoggedIn={isLoggedIn}
           />
+        ) : (
+          /* ---- Published: full queue view ---- */
+          <>
+            <QueueCover
+              aiName={data.aiName}
+              aiCoverUrl={data.aiCoverUrl}
+              senderName={senderName}
+              senderAvatarId={senderAvatarId}
+              songCount={data.songs.length}
+              weekDate={formattedWeek}
+            />
+
+            <QueueContent
+              queueId={id}
+              songs={data.songs}
+              isLoggedIn={isLoggedIn}
+              senderName={senderName}
+              senderAvatarId={senderAvatarId}
+              platform={
+                (session?.user as { platformPreference?: string } | undefined)
+                  ?.platformPreference as "spotify" | "apple_music" | undefined
+              }
+            />
+
+            {!isLoggedIn && (
+              <SignInCta
+                senderName={senderName}
+                senderAvatarId={senderAvatarId}
+              />
+            )}
+          </>
         )}
 
-        {/* Footer */}
         <footer className="pb-9 pt-10 text-center safe-area-bottom">
           <p className="font-body text-[0.78rem] font-medium text-gray-400">
             Powered by{" "}
