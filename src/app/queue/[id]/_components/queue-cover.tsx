@@ -40,6 +40,8 @@ export function QueueCover({
             size={340}
             interactive
             className="mx-auto"
+            title={aiName ?? "Untitled Queue"}
+            subtitle={`Week of ${weekDate}`}
           />
         ) : (
           <div className="mx-auto aspect-square w-full max-w-[340px] overflow-hidden rounded-[24px] border-3 border-black">
@@ -57,15 +59,17 @@ export function QueueCover({
         </div>
       </div>
 
-      {/* Queue name */}
-      <h1 className="mt-5 font-display text-[1.6rem] font-black leading-[1.15] tracking-tight md:text-[1.8rem]">
-        {aiName ?? "Untitled Queue"}
-      </h1>
-
-      {/* Meta line */}
-      <p className="mt-1 font-body text-[0.88rem] font-medium tracking-tight text-gray-500">
-        Week of {weekDate}
-      </p>
+      {/* Queue name + date are now rendered ON the cover via HoloCover title/subtitle props */}
+      {!aiCoverUrl && (
+        <>
+          <h1 className="mt-5 font-display text-[1.6rem] font-black leading-[1.15] tracking-tight md:text-[1.8rem]">
+            {aiName ?? "Untitled Queue"}
+          </h1>
+          <p className="mt-1 font-body text-[0.88rem] font-medium tracking-tight text-gray-500">
+            Week of {weekDate}
+          </p>
+        </>
+      )}
     </div>
   );
 }

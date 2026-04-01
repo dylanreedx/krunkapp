@@ -75,6 +75,8 @@ export function DraftPreview({
             blurred
             interactive
             className="mx-auto"
+            title={`${songCount} song${songCount !== 1 ? "s" : ""}`}
+            subtitle={`Week of ${weekDate}`}
           />
         ) : (
           <div className="mx-auto aspect-square w-full max-w-[340px] overflow-hidden rounded-[24px] border-3 border-black">

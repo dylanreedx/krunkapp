@@ -13,6 +13,8 @@ export type HoloCoverProps = {
   interactive?: boolean;
   className?: string;
   onReveal?: () => void;
+  title?: string;
+  subtitle?: string;
 };
 
 // ---------------------------------------------------------------------------
@@ -181,20 +183,29 @@ const fragmentShader = /* glsl */ `
     vec3 foilColor = rainbow * foilIntensity;
     color = color + foilColor * color; // soft light-style blend: adds to brights, subtle on darks
 
-    // --- Glare (subtle, on top of foil pattern) ---
-    float glare = pow(mouseProximity, 4.0) * mix(0.12, 0.05, uBlur);
-    color += vec3(glare);
+    // --- Glare (textured + iridescent, not plain white) ---
+    float glareBase = pow(mouseProximity, 3.5) * mix(0.15, 0.05, uBlur);
+    float glareTexture = pattern * 0.5 + 0.5;
+    float glareGrain = fract(sin(dot(uv * 200.0 + uTime * 0.5, vec2(127.1, 311.7))) * 43758.5) * 0.3 + 0.7;
+    float glare = glareBase * glareTexture * glareGrain;
+    vec3 glareColor = mix(vec3(1.0), rainbow, 0.4);
+    color += glareColor * glare;
 
     // --- Film grain ---
     float grain = fract(sin(dot(uv * 500.0 + uTime, vec2(12.9898, 78.233))) * 43758.5453);
     color += (grain - 0.5) * 0.02;
 
-    // --- Holographic border (inner glow, hue shifts with mouse) ---
-    float borderDist = min(min(uv.x, 1.0 - uv.x), min(uv.y, 1.0 - uv.y));
+    // --- Holographic border (inner glow + corner boost) ---
+    float edgeX = min(uv.x, 1.0 - uv.x);
+    float edgeY = min(uv.y, 1.0 - uv.y);
+    float borderDist = min(edgeX, edgeY);
     float borderGlow = smoothstep(0.05, 0.0, borderDist);
+    float cornerDist = length(vec2(edgeX, edgeY));
+    float cornerGlow = smoothstep(0.12, 0.0, cornerDist);
+    float combinedBorder = borderGlow + cornerGlow * 0.6;
     float borderHue = fract((uMouse.x + uMouse.y) * 0.5 + uTime * 0.05);
     vec3 borderColor = hsv2rgb(vec3(borderHue, 0.8, 0.8));
-    color += borderColor * borderGlow * mix(0.3, 0.15, uBlur);
+    color += borderColor * combinedBorder * mix(0.3, 0.15, uBlur);
 
     gl_FragColor = vec4(color, 1.0);
   }
@@ -256,7 +267,9 @@ function HoloPlane({
   const blurTarget = useRef(blurAmount);
   const transitionStart = useRef(0);
   const transitionFrom = useRef(blurAmount);
-  const transitionDuration = 0.45; // seconds
+  // Asymmetric: reveal is snappy, blur is gentler
+  const revealDuration = 0.35;
+  const blurDuration = 0.5;
 
   // Stable uniforms — created once, updated in useFrame
   const uniforms = useRef({
@@ -277,10 +290,15 @@ function HoloPlane({
       blurTarget.current = blurAmount;
     }
 
-    // Ease-out cubic: fast start, smooth deceleration
+    // Revealing (blur→0): expo ease-out — fast snap, smooth settle
+    // Blurring (0→blur): sine ease-in-out — gentle and natural
+    const isRevealing = blurAmount < transitionFrom.current;
+    const duration = isRevealing ? revealDuration : blurDuration;
     const elapsed = t - transitionStart.current;
-    const progress = Math.min(elapsed / transitionDuration, 1);
-    const eased = 1 - Math.pow(1 - progress, 3); // cubic ease-out
+    const progress = Math.min(elapsed / duration, 1);
+    const eased = isRevealing
+      ? 1 - Math.pow(2, -10 * progress) // expo ease-out: instant response, long tail
+      : -(Math.cos(Math.PI * progress) - 1) / 2; // sine ease-in-out: smooth both ends
     currentBlur.current = transitionFrom.current + (blurAmount - transitionFrom.current) * eased;
 
     uniforms.uTime.value = t;
@@ -402,7 +420,16 @@ function useMouseAndTilt(
       const { rx, ry } = tiltCurrent.current;
 
       el.style.transform = `perspective(800px) rotateX(${rx}deg) rotateY(${ry}deg)`;
-      el.style.filter = `drop-shadow(${ry * 0.8}px ${-rx * 0.8 + 8}px 20px rgba(0,0,0,0.2))`;
+      el.style.filter = `drop-shadow(${ry * 0.5}px ${-rx * 0.5 + 6}px 16px rgba(0,0,0,0.15))`;
+
+      // Pink accent shadow — hard graphic offset, brutalist style
+      const tiltMag = Math.sqrt(rx * rx + ry * ry);
+      const intensity = Math.min(tiltMag / 5, 1);
+      const shadowX = Math.round(-ry * 1.8);
+      const shadowY = Math.round(rx * 1.8);
+      el.style.boxShadow = intensity > 0.05
+        ? `${shadowX}px ${shadowY}px 0px 0px #ff2d78`
+        : "none";
 
       raf.current = requestAnimationFrame(animate);
     };
@@ -424,6 +451,8 @@ export function HoloCover({
   interactive = true,
   className,
   onReveal,
+  title,
+  subtitle,
 }: HoloCoverProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const tiltRef = useRef<HTMLDivElement>(null);
@@ -450,23 +479,26 @@ export function HoloCover({
       style={{ width: size, height: size, position: "relative" }}
     >
       {/* Tilt wrapper */}
-      <div ref={tiltRef} style={{ width: size, height: size, transformStyle: "preserve-3d", willChange: "transform" }}>
+      <div ref={tiltRef} style={{ width: size, height: size, transformStyle: "preserve-3d", willChange: "transform", borderRadius: 24 }}>
         {/* Visual container */}
         <div className="relative h-full w-full overflow-hidden rounded-[24px]">
-          <Canvas
-            gl={{ antialias: true, alpha: false, powerPreference: "high-performance" }}
-            camera={{ position: [0, 0, 1], fov: 50 }}
-            dpr={dpr}
-            style={{ width: "100%", height: "100%", display: "block", pointerEvents: "none" }}
-            events={() => ({ enabled: false, priority: 0, compute: () => {} } as never)}
-          >
-            <DisableToneMapping />
-            <HoloPlane
-              src={src}
-              mouseRef={mouseRef}
-              blurAmount={isBlurred ? 1 : 0}
-            />
-          </Canvas>
+          {/* Canvas in its own stacking layer so overlays render above */}
+          <div className="absolute inset-0 z-0">
+            <Canvas
+              gl={{ antialias: true, alpha: false, powerPreference: "high-performance" }}
+              camera={{ position: [0, 0, 1], fov: 50 }}
+              dpr={dpr}
+              style={{ width: "100%", height: "100%", display: "block", pointerEvents: "none" }}
+              events={() => ({ enabled: false, priority: 0, compute: () => {} } as never)}
+            >
+              <DisableToneMapping />
+              <HoloPlane
+                src={src}
+                mouseRef={mouseRef}
+                blurAmount={isBlurred ? 1 : 0}
+              />
+            </Canvas>
+          </div>
 
           {/* Tap to peek */}
           {isBlurred && blurred && (
@@ -477,6 +509,44 @@ export function HoloCover({
             </div>
           )}
         </div>
+
+        {/* Title + subtitle — translateZ pushes above Canvas in 3D space, tilts with card */}
+        {(title || subtitle) && (
+          <div
+            className="pointer-events-none absolute inset-x-0 bottom-0 overflow-hidden rounded-b-[24px] px-5 pb-5 pt-14 transition-[filter,opacity] duration-[400ms] ease-[cubic-bezier(0.16,1,0.3,1)]"
+            style={{
+              transform: "translateZ(2px)",
+              background: isBlurred
+                ? "linear-gradient(to top, rgba(0,0,0,0.4) 0%, rgba(0,0,0,0.15) 55%, transparent 100%)"
+                : "linear-gradient(to top, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0.25) 55%, transparent 100%)",
+              filter: isBlurred ? "blur(6px) saturate(1.4)" : "none",
+            }}
+          >
+            {title && (
+              <h2
+                className="font-display text-[1.35rem] font-black leading-[1.15] tracking-tight"
+                style={{
+                  color: "white",
+                  textShadow: "-2px 0 rgba(255,45,120,0.6), 2px 0 rgba(0,200,255,0.6), 0 0 24px rgba(255,45,120,0.3)",
+                  WebkitBackgroundClip: "text",
+                }}
+              >
+                {title}
+              </h2>
+            )}
+            {subtitle && (
+              <p
+                className="mt-1 font-body text-[0.82rem] font-medium"
+                style={{
+                  color: "rgba(255,255,255,0.75)",
+                  textShadow: "-1px 0 rgba(255,45,120,0.4), 1px 0 rgba(0,200,255,0.4)",
+                }}
+              >
+                {subtitle}
+              </p>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Click target — pointer-events:none lets mousemove pass to containerRef */}
@@ -490,6 +560,7 @@ export function HoloCover({
           className="absolute inset-0 z-20 cursor-pointer outline-none"
         />
       )}
+
     </div>
   );
 }
