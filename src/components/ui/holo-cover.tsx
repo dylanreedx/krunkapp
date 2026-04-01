@@ -305,7 +305,7 @@ function StaticCover({
   const [mouse, setMouse] = useState({ x: 0.5, y: 0.5 });
 
   const handleMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (!interactive || blurred) return;
+    if (!interactive) return;
     const rect = e.currentTarget.getBoundingClientRect();
     setMouse({
       x: (e.clientX - rect.left) / rect.width,
@@ -315,10 +315,12 @@ function StaticCover({
 
   const handleLeave = () => setMouse({ x: 0.5, y: 0.5 });
 
-  // Rainbow position based on mouse
   const gradAngle = Math.atan2(mouse.y - 0.5, mouse.x - 0.5) * (180 / Math.PI);
   const glareX = mouse.x * 100;
   const glareY = mouse.y * 100;
+
+  // Border holo color shifts with mouse
+  const borderHue = ((mouse.x + mouse.y) * 180) % 360;
 
   return (
     <div
@@ -332,44 +334,67 @@ function StaticCover({
         alt=""
         className={cn(
           "h-full w-full object-cover transition-all duration-700",
-          blurred && "blur-[4px] scale-[1.05] saturate-[1.2]",
+          blurred && "blur-[6px] scale-[1.1] saturate-[1.4] brightness-[0.8]",
         )}
         draggable={false}
       />
 
-      {/* Holographic overlay — only when not blurred */}
-      {!blurred && interactive && (
-        <>
-          {/* Rainbow foil */}
-          <div
-            className="pointer-events-none absolute inset-0 mix-blend-color-dodge opacity-[0.08] transition-all duration-150"
-            style={{
-              background: `linear-gradient(${gradAngle}deg,
-                rgba(255,0,0,0.5), rgba(255,165,0,0.5), rgba(255,255,0,0.5),
-                rgba(0,255,0,0.5), rgba(0,200,255,0.5), rgba(138,43,226,0.5),
-                rgba(255,0,0,0.5))`,
-            }}
-          />
+      {/* === Effects — always on, even when blurred === */}
 
-          {/* Glare spot */}
-          <div
-            className="pointer-events-none absolute inset-0 mix-blend-overlay transition-all duration-150"
-            style={{
-              background: `radial-gradient(circle at ${glareX}% ${glareY}%, rgba(255,255,255,0.25) 0%, transparent 50%)`,
-            }}
-          />
+      {/* Rainbow foil overlay */}
+      <div
+        className="pointer-events-none absolute inset-0 mix-blend-color-dodge transition-all duration-300"
+        style={{
+          opacity: blurred ? 0.06 : 0.1,
+          background: `linear-gradient(${gradAngle + 45}deg,
+            rgba(255,50,50,0.6), rgba(255,180,0,0.6), rgba(255,255,50,0.6),
+            rgba(50,255,100,0.6), rgba(50,200,255,0.6), rgba(180,50,255,0.6),
+            rgba(255,50,120,0.6))`,
+        }}
+      />
 
-          {/* Shimmer sweep */}
-          <div
-            className="pointer-events-none absolute inset-0 opacity-[0.06]"
-            style={{
-              background: "linear-gradient(135deg, transparent 40%, rgba(255,255,255,0.8) 50%, transparent 60%)",
-              backgroundSize: "200% 200%",
-              animation: "shimmer-border 3s ease-in-out infinite",
-            }}
-          />
-        </>
-      )}
+      {/* Glare spot — follows mouse */}
+      <div
+        className="pointer-events-none absolute inset-0 mix-blend-overlay transition-all duration-200"
+        style={{
+          background: `radial-gradient(ellipse at ${glareX}% ${glareY}%, rgba(255,255,255,${blurred ? 0.15 : 0.3}) 0%, transparent 55%)`,
+        }}
+      />
+
+      {/* Heavy vignette */}
+      <div
+        className="pointer-events-none absolute inset-0"
+        style={{
+          background: "radial-gradient(ellipse at center, transparent 30%, rgba(0,0,0,0.5) 100%)",
+        }}
+      />
+
+      {/* Shimmer sweep — slow, subtle */}
+      <div
+        className="pointer-events-none absolute inset-0"
+        style={{
+          opacity: blurred ? 0.04 : 0.08,
+          background: "linear-gradient(115deg, transparent 30%, rgba(255,255,255,0.6) 48%, rgba(255,255,255,0.8) 50%, rgba(255,255,255,0.6) 52%, transparent 70%)",
+          backgroundSize: "300% 300%",
+          animation: "holo-shimmer 8s ease-in-out infinite",
+        }}
+      />
+
+      {/* Inner holo border glow */}
+      <div
+        className="pointer-events-none absolute inset-0 rounded-[21px] transition-all duration-300"
+        style={{
+          boxShadow: `inset 0 0 0 2px hsla(${borderHue}, 80%, 65%, ${blurred ? 0.3 : 0.5}), inset 0 0 15px 2px hsla(${borderHue}, 80%, 65%, ${blurred ? 0.1 : 0.2})`,
+        }}
+      />
+
+      <style>{`
+        @keyframes holo-shimmer {
+          0% { background-position: 200% 200%; }
+          50% { background-position: -50% -50%; }
+          100% { background-position: 200% 200%; }
+        }
+      `}</style>
     </div>
   );
 }
@@ -415,7 +440,7 @@ export function HoloCover({
     }
   }, [isDataUrl]);
 
-  useTilt(containerRef, mouseRef, interactive && !isBlurred);
+  useTilt(containerRef, mouseRef, interactive);
 
   const handleClick = useCallback(() => {
     if (blurred) {
@@ -435,11 +460,12 @@ export function HoloCover({
       aria-label={blurred ? (isBlurred ? "Tap to reveal cover art" : "Tap to hide cover art") : alt}
       onKeyDown={blurred ? (e) => { if (e.key === "Enter" || e.key === " ") handleClick(); } : undefined}
       className={cn(
-        "relative overflow-hidden rounded-[24px] border-3 border-black",
+        "relative overflow-hidden rounded-[24px] border-[3px]",
         blurred && "cursor-pointer",
-        interactive && "transition-shadow duration-300",
+        interactive && "transition-all duration-300",
         className,
       )}
+      data-holo-border
       style={{
         width: size,
         height: size,
@@ -500,6 +526,29 @@ export function HoloCover({
         @keyframes shimmer-border {
           0%, 100% { background-position: 200% 200%; }
           50% { background-position: 0% 0%; }
+        }
+        [data-holo-border] {
+          border-color: transparent;
+          background-clip: padding-box;
+          position: relative;
+        }
+        [data-holo-border]::before {
+          content: '';
+          position: absolute;
+          inset: -3px;
+          border-radius: 27px;
+          background: linear-gradient(
+            var(--holo-angle, 135deg),
+            #ff2d78, #ff6b35, #ffd700, #00ff88, #00ccff, #a855f7, #ff2d78
+          );
+          z-index: -1;
+          animation: holo-border-rotate 6s linear infinite;
+          background-size: 300% 300%;
+        }
+        @keyframes holo-border-rotate {
+          0% { background-position: 0% 50%; }
+          50% { background-position: 100% 50%; }
+          100% { background-position: 0% 50%; }
         }
       `}</style>
     </div>
