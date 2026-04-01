@@ -17,11 +17,23 @@ function getWeekLabel() {
 export default async function DashboardPage() {
   const session = await requireAuth("/dashboard");
 
+  // Check if user needs onboarding (no display name set)
+  const { db } = await import("@/server/db");
+  const { eq } = await import("drizzle-orm");
+  const { user: userTable } = await import("@/server/db/schema");
+  const userData = await db.query.user.findFirst({
+    where: eq(userTable.id, session.user.id),
+    columns: { displayName: true },
+  });
+  if (!userData?.displayName) {
+    redirect("/onboarding?redirect=/dashboard");
+  }
+
   // Prefetch queues for client components
   void api.queue.list.prefetch();
 
   const user = session.user;
-  const firstName = (user.name ?? user.email ?? "").split(/[\s@]/)[0];
+  const firstName = (userData.displayName ?? user.name ?? user.email ?? "").split(/[\s@]/)[0];
   const weekLabel = getWeekLabel();
 
   return (

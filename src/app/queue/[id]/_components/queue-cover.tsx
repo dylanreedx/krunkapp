@@ -1,7 +1,7 @@
 "use client";
 
-import Image from "next/image";
 import { Avatar } from "@/components/ui/avatar";
+import { HoloCover } from "@/components/ui/holo-cover";
 
 type QueueCoverProps = {
   aiName: string | null;
@@ -31,33 +31,25 @@ export function QueueCover({
         </p>
       </div>
 
-      {/* Cover art with slight rotation + sticker badge */}
-      <div className="relative w-full max-w-[340px] rotate-[1deg]">
-        <div className="relative aspect-square w-full overflow-hidden rounded-[24px] border-3 border-black">
-          {aiCoverUrl ? (
-            <Image
-              src={aiCoverUrl}
-              alt={aiName ?? "Queue cover"}
-              width={680}
-              height={680}
-              className="h-full w-full object-cover"
-              priority
-            />
-          ) : (
+      {/* Cover art — holographic when image exists */}
+      <div className="relative w-full max-w-[340px]">
+        {aiCoverUrl ? (
+          <HoloCover
+            src={aiCoverUrl}
+            alt={aiName ?? "Queue cover"}
+            size={340}
+            interactive
+            className="mx-auto"
+          />
+        ) : (
+          <div className="mx-auto aspect-square w-full max-w-[340px] overflow-hidden rounded-[24px] border-3 border-black">
             <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-[#1a1a2e] via-[#0f3460] to-[#111]">
               <span className="font-display text-5xl font-black text-white/20">
                 K
               </span>
             </div>
-          )}
-
-          {/* Title overlay at bottom of cover */}
-          <div className="absolute inset-x-0 bottom-0 z-[2] rounded-b-[21px] bg-gradient-to-t from-black/75 via-black/30 to-transparent px-6 pb-6 pt-[60px]">
-            <h1 className="font-display text-[1.6rem] font-black leading-[1.15] tracking-tight text-white md:text-[1.8rem]">
-              {aiName ?? "Untitled Queue"}
-            </h1>
           </div>
-        </div>
+        )}
 
         {/* Track count sticker badge */}
         <div className="absolute -right-1.5 top-4 z-[3] -rotate-[8deg] rounded-full border-3 border-black bg-pink px-3.5 py-1.5 font-display text-[0.68rem] font-bold tracking-wide text-white">
@@ -65,8 +57,13 @@ export function QueueCover({
         </div>
       </div>
 
+      {/* Queue name */}
+      <h1 className="mt-5 font-display text-[1.6rem] font-black leading-[1.15] tracking-tight md:text-[1.8rem]">
+        {aiName ?? "Untitled Queue"}
+      </h1>
+
       {/* Meta line */}
-      <p className="mt-4 font-body text-[0.88rem] font-medium tracking-tight text-gray-500">
+      <p className="mt-1 font-body text-[0.88rem] font-medium tracking-tight text-gray-500">
         Week of {weekDate}
       </p>
     </div>

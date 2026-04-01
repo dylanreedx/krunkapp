@@ -80,6 +80,18 @@ export default async function QueueViewPage({ params }: Props) {
   const session = await getSession();
   const isLoggedIn = !!session?.user;
 
+  // Redirect to onboarding if logged in but no display name
+  if (isLoggedIn) {
+    const userData = await db.query.user.findFirst({
+      where: eq(user.id, session.user.id),
+      columns: { displayName: true },
+    });
+    if (!userData?.displayName) {
+      const { redirect } = await import("next/navigation");
+      redirect(`/onboarding?redirect=/queue/${id}`);
+    }
+  }
+
   // Auto-add as listener if logged in and not already a listener
   if (isLoggedIn && session.user.id !== data.creatorId) {
     const existing = await db.query.queueRecipient.findFirst({
@@ -126,6 +138,7 @@ export default async function QueueViewPage({ params }: Props) {
             senderName={senderName}
             senderAvatarId={senderAvatarId}
             aiCoverUrl={data.aiCoverUrl}
+            songs={data.songs.map((s) => ({ id: s.id, albumArtUrl: s.albumArtUrl }))}
             songCount={data.songs.length}
             weekDate={formattedWeek}
             isLoggedIn={isLoggedIn}

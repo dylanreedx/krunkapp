@@ -138,7 +138,18 @@ export const queueRouter = createTRPCRouter({
           songs: {
             orderBy: (songs, { asc }) => [asc(songs.position)],
           },
-          recipients: true,
+          recipients: {
+            with: {
+              user: {
+                columns: {
+                  id: true,
+                  name: true,
+                  displayName: true,
+                  avatarId: true,
+                },
+              },
+            },
+          },
         },
       });
 

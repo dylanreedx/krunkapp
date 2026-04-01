@@ -11,6 +11,12 @@ interface Recipient {
   queueId: string;
   userId: string | null;
   phoneNumber: string | null;
+  user?: {
+    id: string;
+    name: string | null;
+    displayName: string | null;
+    avatarId: string | null;
+  } | null;
 }
 
 // TODO: Auto-match on signup — when a new user signs up and enters their phone,
@@ -30,7 +36,6 @@ export function RecipientPicker({
   const [error, setError] = useState<string | null>(null);
 
   const utils = api.useUtils();
-  const [friends] = api.queue.listFriends.useSuspenseQuery();
 
   const addPhoneRecipient = api.queue.addPhoneRecipient.useMutation({
     onSuccess: () => {
@@ -51,7 +56,7 @@ export function RecipientPicker({
   });
 
   // Map recipient userId to friend data for display
-  const recipientFriendMap = new Map(friends.map((f) => [f.id, f]));
+  // User data now comes joined from the query, no friend map needed
 
   const handleSend = () => {
     setError(null);
@@ -76,16 +81,15 @@ export function RecipientPicker({
       {/* Recipient avatar grid */}
       <div className="flex flex-wrap items-start gap-5">
         {recipients.map((r) => {
-          const friend = r.userId ? recipientFriendMap.get(r.userId) : null;
           const hasUser = !!r.userId;
-          const label = friend?.displayName ?? friend?.name ?? r.phoneNumber ?? "?";
+          const label = r.user?.displayName ?? r.user?.name ?? r.phoneNumber ?? "?";
 
           return (
             <div key={r.id} className="flex flex-col items-center gap-2">
               <div className="group relative">
                 {hasUser ? (
                   <Avatar
-                    avatarId="smile-pink"
+                    avatarId={r.user?.avatarId ?? "smile-pink"}
                     size="lg"
                     className="transition-transform hover:scale-[1.08]"
                   />

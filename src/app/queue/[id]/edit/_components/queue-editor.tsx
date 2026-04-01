@@ -4,6 +4,7 @@ import { useState, useCallback } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { CaretLeft, LinkSimple, Copy, Check, PaperPlaneTilt, ShareNetwork, Sparkle } from "@phosphor-icons/react";
+import { HoloCover } from "@/components/ui/holo-cover";
 import { api } from "@/trpc/react";
 import { Badge } from "@/components/ui/badge";
 import { WeekStrip } from "@/components/ui/week-strip";
@@ -262,13 +263,7 @@ function ShareLink({ queueId }: { queueId: string }) {
 /* AI Preview — generate name + cover, with ONE reroll                 */
 /* ------------------------------------------------------------------ */
 
-type ObscureStyle = "heavy" | "medium" | "peek";
-
-const OBSCURE_STYLES: { id: ObscureStyle; label: string }[] = [
-  { id: "heavy", label: "Hidden" },
-  { id: "medium", label: "Glimpse" },
-  { id: "peek", label: "Peek" },
-];
+// Single blur style — "peek" only
 
 function AiPreview({
   queueId,
@@ -292,7 +287,6 @@ function AiPreview({
   const [loading, setLoading] = useState(false);
   const [hasRerolled, setHasRerolled] = useState(false);
   const [showRerollConfirm, setShowRerollConfirm] = useState(false);
-  const [obscure, setObscure] = useState<ObscureStyle>("heavy");
   const [flipAnim, setFlipAnim] = useState(false);
   const [shakeAnim, setShakeAnim] = useState(false);
 
@@ -321,13 +315,6 @@ function AiPreview({
       previewAI.mutate({ queueId });
     }, 600);
   }, [previewAI, queueId]);
-
-  // CSS blur + scale to truly obscure the image
-  const obscureCSS: Record<ObscureStyle, string> = {
-    heavy: "blur-[20px] scale-[1.3] saturate-[1.8] brightness-[0.7]",
-    medium: "blur-[10px] scale-[1.15] saturate-[1.4]",
-    peek: "blur-[4px] scale-[1.05] saturate-[1.2]",
-  };
 
   return (
     <section className="mb-9 animate-[fade-up_0.5s_ease-out_0.65s_both]">
@@ -378,24 +365,17 @@ function AiPreview({
         {preview && !loading && (
           <div>
             <div className="flex items-start gap-4 max-sm:flex-col max-sm:items-center max-sm:text-center">
-              {/* Cover art — heavily obscured by default */}
-              <div
-                className={`relative h-[110px] w-[110px] shrink-0 overflow-hidden rounded-[18px] border-3 border-black max-sm:mx-auto ${flipAnim ? "animate-[flip_0.7s_ease-out]" : ""} ${shakeAnim ? "animate-[shake_0.5s_ease-in-out]" : ""}`}
-              >
+              {/* Cover art — holographic with blur */}
+              <div className={`shrink-0 max-sm:mx-auto ${flipAnim ? "animate-[flip_0.7s_ease-out]" : ""} ${shakeAnim ? "animate-[shake_0.5s_ease-in-out]" : ""}`}>
                 {preview.coverImageUrl ? (
-                  <>
-                    <img
-                      src={preview.coverImageUrl}
-                      alt=""
-                      className={`h-full w-full object-cover transition-all duration-700 ${obscureCSS[obscure]}`}
-                    />
-                    {/* Color overlay on heavy blur for extra mystery */}
-                    {obscure === "heavy" && (
-                      <div className="absolute inset-0 bg-black/20 mix-blend-overlay" />
-                    )}
-                  </>
+                  <HoloCover
+                    src={preview.coverImageUrl}
+                    size={110}
+                    blurred
+                    interactive
+                  />
                 ) : (
-                  <div className="flex h-full w-full items-center justify-center bg-gray-100">
+                  <div className="flex h-[110px] w-[110px] items-center justify-center rounded-[18px] border-3 border-black bg-gray-100">
                     <Sparkle weight="duotone" size={32} className="text-gray-300" />
                   </div>
                 )}
@@ -409,25 +389,6 @@ function AiPreview({
                   Full reveal on drop day
                 </p>
 
-                {/* Obscure level pills */}
-                {preview.coverImageUrl && (
-                  <div className="mt-3 flex flex-wrap gap-1.5">
-                    {OBSCURE_STYLES.map((style) => (
-                      <button
-                        key={style.id}
-                        type="button"
-                        onClick={() => setObscure(style.id)}
-                        className={`rounded-full px-3 py-1.5 font-display text-[10px] font-bold transition-all ${
-                          obscure === style.id
-                            ? "bg-pink text-white"
-                            : "border-2 border-gray-200 bg-white text-gray-500 hover:border-pink hover:text-pink"
-                        }`}
-                      >
-                        {style.label}
-                      </button>
-                    ))}
-                  </div>
-                )}
 
                 {/* Reroll — dramatic, scarce */}
                 {!hasRerolled && !showRerollConfirm && (
