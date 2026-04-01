@@ -296,19 +296,81 @@ function useTilt(
 function StaticCover({
   src,
   blurred,
+  interactive,
 }: {
   src: string;
   blurred: boolean;
+  interactive: boolean;
 }) {
+  const [mouse, setMouse] = useState({ x: 0.5, y: 0.5 });
+
+  const handleMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!interactive || blurred) return;
+    const rect = e.currentTarget.getBoundingClientRect();
+    setMouse({
+      x: (e.clientX - rect.left) / rect.width,
+      y: (e.clientY - rect.top) / rect.height,
+    });
+  };
+
+  const handleLeave = () => setMouse({ x: 0.5, y: 0.5 });
+
+  // Rainbow position based on mouse
+  const gradAngle = Math.atan2(mouse.y - 0.5, mouse.x - 0.5) * (180 / Math.PI);
+  const glareX = mouse.x * 100;
+  const glareY = mouse.y * 100;
+
   return (
-    <img
-      src={src}
-      alt=""
-      className={cn(
-        "h-full w-full object-cover transition-all duration-700",
-        blurred && "blur-[4px] scale-[1.05] saturate-[1.2]",
+    <div
+      className="relative h-full w-full overflow-hidden"
+      onMouseMove={handleMove}
+      onMouseLeave={handleLeave}
+    >
+      {/* Base image */}
+      <img
+        src={src}
+        alt=""
+        className={cn(
+          "h-full w-full object-cover transition-all duration-700",
+          blurred && "blur-[4px] scale-[1.05] saturate-[1.2]",
+        )}
+        draggable={false}
+      />
+
+      {/* Holographic overlay — only when not blurred */}
+      {!blurred && interactive && (
+        <>
+          {/* Rainbow foil */}
+          <div
+            className="pointer-events-none absolute inset-0 mix-blend-color-dodge opacity-[0.08] transition-all duration-150"
+            style={{
+              background: `linear-gradient(${gradAngle}deg,
+                rgba(255,0,0,0.5), rgba(255,165,0,0.5), rgba(255,255,0,0.5),
+                rgba(0,255,0,0.5), rgba(0,200,255,0.5), rgba(138,43,226,0.5),
+                rgba(255,0,0,0.5))`,
+            }}
+          />
+
+          {/* Glare spot */}
+          <div
+            className="pointer-events-none absolute inset-0 mix-blend-overlay transition-all duration-150"
+            style={{
+              background: `radial-gradient(circle at ${glareX}% ${glareY}%, rgba(255,255,255,0.25) 0%, transparent 50%)`,
+            }}
+          />
+
+          {/* Shimmer sweep */}
+          <div
+            className="pointer-events-none absolute inset-0 opacity-[0.06]"
+            style={{
+              background: "linear-gradient(135deg, transparent 40%, rgba(255,255,255,0.8) 50%, transparent 60%)",
+              backgroundSize: "200% 200%",
+              animation: "shimmer-border 3s ease-in-out infinite",
+            }}
+          />
+        </>
       )}
-    />
+    </div>
   );
 }
 
@@ -340,16 +402,18 @@ export function HoloCover({
   const [isBlurred, setIsBlurred] = useState(blurred);
   const [supportsWebGL, setSupportsWebGL] = useState(true);
 
-  // Check WebGL support
+  // Check WebGL support + data URL detection
+  const isDataUrl = src.startsWith("data:");
+
   useEffect(() => {
     try {
       const canvas = document.createElement("canvas");
       const gl = canvas.getContext("webgl2") ?? canvas.getContext("webgl");
-      setSupportsWebGL(!!gl);
+      setSupportsWebGL(!!gl && !isDataUrl); // data URLs don't work well with Three.js TextureLoader
     } catch {
       setSupportsWebGL(false);
     }
-  }, []);
+  }, [isDataUrl]);
 
   useTilt(containerRef, mouseRef, interactive && !isBlurred);
 
@@ -406,7 +470,7 @@ export function HoloCover({
           </Canvas>
         </Suspense>
       ) : (
-        <StaticCover src={src} blurred={isBlurred} />
+        <StaticCover src={src} blurred={isBlurred} interactive={interactive} />
       )}
 
       {/* "Tap to reveal" hint when blurred */}
