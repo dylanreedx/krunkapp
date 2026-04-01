@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar } from "@/components/ui/avatar";
 
-type Tab = "drafts" | "sent" | "received";
+type Tab = "drafts" | "sent" | "listening";
 
 export function QueueList({ userId }: { userId: string }) {
   const router = useRouter();
@@ -57,7 +57,7 @@ export function QueueList({ userId }: { userId: string }) {
       {/* Segmented control */}
       <div className="animate-[fade-up_0.5s_cubic-bezier(0.16,1,0.3,1)_0.72s_both]">
         <div className="inline-flex rounded-full border-[3px] border-black p-1">
-          {(["drafts", "sent", "received"] as const).map((tab) => (
+          {(["drafts", "sent", "listening"] as const).map((tab) => (
             <button
               key={tab}
               type="button"
@@ -85,7 +85,7 @@ export function QueueList({ userId }: { userId: string }) {
               queue={queue}
               index={i}
               isDraft={activeTab === "drafts"}
-              isReceived={activeTab === "received"}
+              isListening={activeTab === "listening"}
               onClick={() =>
                 activeTab === "drafts"
                   ? router.push(`/queue/${queue.id}/edit`)
@@ -141,13 +141,13 @@ function QueueCard({
   queue,
   index,
   isDraft,
-  isReceived,
+  isListening,
   onClick,
 }: {
   queue: QueueRow;
   index: number;
   isDraft?: boolean;
-  isReceived?: boolean;
+  isListening?: boolean;
   onClick?: () => void;
 }) {
   const weekLabel = formatWeekLabel(queue.weekStartDate);
@@ -186,8 +186,8 @@ function QueueCard({
       <div className="flex items-center gap-2.5">
         {isDraft ? (
           <Badge variant="outline">Draft</Badge>
-        ) : isReceived ? (
-          <Badge variant="black">Received</Badge>
+        ) : isListening ? (
+          <Badge variant="black">Listening</Badge>
         ) : (
           <Badge variant="pink">Dropped</Badge>
         )}
@@ -222,7 +222,7 @@ function EmptyState({ tab }: { tab: Tab }) {
       heading: "No drops yet",
       sub: "When you publish a queue, it shows up here.",
     },
-    received: {
+    listening: {
       heading: "No drops yet",
       sub: "When your friends send you music, it lands here.",
     },
@@ -231,7 +231,7 @@ function EmptyState({ tab }: { tab: Tab }) {
   return (
     <div className="py-20 text-center">
       <span className="mb-5 block opacity-70">
-        {tab === "received" ? <Tray weight="light" size={48} className="mx-auto text-gray-400" /> : <MusicNote weight="light" size={48} className="mx-auto text-gray-400" />}
+        {tab === "listening" ? <Tray weight="light" size={48} className="mx-auto text-gray-400" /> : <MusicNote weight="light" size={48} className="mx-auto text-gray-400" />}
       </span>
       <h2 className="mb-3 font-display text-[clamp(1.6rem,4vw,2.4rem)] font-black leading-tight">
         {msg.heading}

@@ -110,7 +110,7 @@ export function RecipientPicker({
                 {hasUser ? (label.split(" ")[0]) : (r.phoneNumber ?? "?")}
               </span>
               <span className="font-body text-[10px] text-gray-400">
-                {hasUser ? "On Krunked" : "SMS on drop"}
+                {hasUser ? "On Krunk" : "SMS on drop"}
               </span>
             </div>
           );
@@ -136,7 +136,7 @@ export function RecipientPicker({
       {recipients.length === 0 && !editable && (
         <div className="rounded-[var(--radius-xl)] border-3 border-dashed border-gray-200 px-6 py-6 text-center">
           <p className="font-display text-sm font-bold uppercase tracking-wide text-gray-400">
-            No recipients yet
+            No listeners yet
           </p>
         </div>
       )}

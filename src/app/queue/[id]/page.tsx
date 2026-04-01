@@ -1,9 +1,8 @@
 import { type Metadata } from "next";
 import { notFound } from "next/navigation";
-import { eq } from "drizzle-orm";
-
+import { and, eq } from "drizzle-orm";
 import { db } from "@/server/db";
-import { queue, user } from "@/server/db/schema";
+import { queue, queueRecipient, user } from "@/server/db/schema";
 import { getSession } from "@/server/better-auth/server";
 
 import { QueueCover } from "./_components/queue-cover";
@@ -80,6 +79,23 @@ export default async function QueueViewPage({ params }: Props) {
 
   const session = await getSession();
   const isLoggedIn = !!session?.user;
+
+  // Auto-add as listener if logged in and not already a listener
+  if (isLoggedIn && session.user.id !== data.creatorId) {
+    const existing = await db.query.queueRecipient.findFirst({
+      where: and(
+        eq(queueRecipient.queueId, id),
+        eq(queueRecipient.userId, session.user.id),
+      ),
+    });
+    if (!existing) {
+      await db.insert(queueRecipient).values({
+        queueId: id,
+        userId: session.user.id,
+      }).onConflictDoNothing();
+    }
+  }
+
   const senderName =
     data.creator?.displayName ?? data.creator?.name ?? "Someone";
   const senderAvatarId = data.creator?.avatarId ?? "smile-pink";

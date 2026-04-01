@@ -137,7 +137,7 @@ export function QueueEditor({
         {/* Recipients */}
         <section className="mb-8 animate-[fade-up_0.5s_ease-out_0.55s_both]">
           <h2 className="mb-4 font-display text-lg font-black">
-            Sending to{" "}
+            Listeners{" "}
             <span className="text-gray-400">({queue.recipients.length})</span>
           </h2>
           <RecipientPicker
