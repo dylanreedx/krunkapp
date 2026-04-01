@@ -1,0 +1,107 @@
+@import "tailwindcss";
+
+@theme {
+  /* Typography — Wheatpaste theme */
+  --font-display: var(--font-unbounded), ui-sans-serif, system-ui, sans-serif;
+  --font-body: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-sans: var(--font-body);
+
+  /* Colors — Wheatpaste palette */
+  --color-white: #ffffff;
+  --color-black: #111111;
+  --color-pink: #ff2d78;
+  --color-pink-light: #fff0f5;
+  --color-pink-dark: #d4215f;
+  --color-gray-50: #fafafa;
+  --color-gray-100: #f3f3f3;
+  --color-gray-200: #e5e5e5;
+  --color-gray-300: #d4d4d4;
+  --color-gray-400: #a3a3a3;
+  --color-gray-500: #888888;
+  --color-gray-600: #555555;
+  --color-gray-800: #262626;
+
+  /* Semantic */
+  --color-foreground: var(--color-black);
+  --color-background: var(--color-white);
+  --color-muted: var(--color-gray-500);
+  --color-border: var(--color-black);
+  --color-accent: var(--color-pink);
+  --color-danger: #ef4444;
+
+  /* Border radius — rounded brutalism */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 20px;
+  --radius-xl: 22px;
+  --radius-full: 9999px;
+
+  /* Spacing extras */
+  --spacing-18: 4.5rem;
+  --spacing-22: 5.5rem;
+}
+
+/* Dot grid background */
+@utility dot-grid {
+  background-image: radial-gradient(circle, rgba(0, 0, 0, 0.04) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+
+/* Safe area utilities */
+@utility safe-area-bottom {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+@utility safe-area-top {
+  padding-top: env(safe-area-inset-top, 0px);
+}
+
+@utility safe-area-x {
+  padding-left: env(safe-area-inset-left, 0px);
+  padding-right: env(safe-area-inset-right, 0px);
+}
+
+/* Animations */
+@keyframes toast-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes pulse-pink {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+}
+
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slide-from-left {
+  from { opacity: 0; transform: translateX(-20px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes breathe {
+  0%, 100% { border-color: #ff2d78; opacity: 0.6; }
+  50% { border-color: #ff2d78; opacity: 1; }
+}
+
+@keyframes flame-pop {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.3); }
+  100% { transform: scale(1); }
+}
+
+/* Base layer */
+@layer base {
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-family: var(--font-body);
+  }
+
+  h1, h2, h3, h4 {
+    font-family: var(--font-display);
+    @apply font-bold;
+  }
+}

@@ -1,0 +1,1274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>krunk — dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@400;700;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --pink: #ff2d78;
+    --black: #111;
+    --gray: #888;
+    --light-gray: #e8e8e8;
+    --white: #ffffff;
+    --font-display: 'Unbounded', sans-serif;
+    --font-body: 'Inter', sans-serif;
+    --border: 3px solid var(--black);
+    --radius: 20px;
+  }
+
+  body {
+    background: var(--white);
+    color: var(--black);
+    font-family: var(--font-body);
+    overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+    padding-bottom: 100px;
+    /* Dot grid background */
+    background-image: radial-gradient(circle, var(--black) 0.8px, transparent 0.8px);
+    background-size: 24px 24px;
+    background-position: 12px 12px;
+    background-attachment: fixed;
+  }
+
+  /* Overlay to control dot opacity */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: rgba(255, 255, 255, 0.96);
+    z-index: 0;
+    pointer-events: none;
+  }
+
+  body > * {
+    position: relative;
+    z-index: 1;
+  }
+
+  /* --- TOP BAR --- */
+  .topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 32px;
+    position: sticky;
+    top: 0;
+    background: rgba(255,255,255,0.92);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    z-index: 100;
+    border-bottom: 3px solid var(--black);
+  }
+
+  .topbar-logo {
+    font-family: var(--font-display);
+    font-weight: 900;
+    font-size: 1.6rem;
+    letter-spacing: -0.02em;
+    text-decoration: none;
+    color: var(--black);
+  }
+
+  .topbar-logo span { color: var(--pink); }
+
+  .topbar-right {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .topbar-gear {
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    border-radius: 10px;
+    transition: background 0.15s ease;
+  }
+
+  .topbar-gear:hover { background: #f0f0f0; }
+
+  .topbar-gear svg {
+    width: 22px;
+    height: 22px;
+    color: var(--black);
+  }
+
+  /* --- AVATAR SYSTEM --- */
+  .avatar {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    border: 3px solid var(--black);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    overflow: hidden;
+    cursor: pointer;
+    transition: transform 0.15s ease;
+    background: var(--white);
+  }
+
+  .avatar:hover { transform: scale(1.08); }
+
+  .avatar svg {
+    width: 100%;
+    height: 100%;
+  }
+
+  .avatar-sm {
+    width: 30px;
+    height: 30px;
+    border-width: 2px;
+  }
+
+  .avatar-xs {
+    width: 26px;
+    height: 26px;
+    border-width: 2px;
+  }
+
+  .avatar-row {
+    display: flex;
+  }
+
+  .avatar-row .avatar:not(:first-child) {
+    margin-left: -8px;
+  }
+
+  .avatar-row .avatar-xs:not(:first-child) {
+    margin-left: -6px;
+  }
+
+  /* --- MAIN CONTENT --- */
+  .main {
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 40px 32px 0;
+  }
+
+  /* --- GREETING --- */
+  .greeting {
+    margin-bottom: 8px;
+    opacity: 0;
+    transform: translateX(-30px);
+    animation: slideInLeft 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.1s forwards;
+  }
+
+  .greeting h1 {
+    font-family: var(--font-display);
+    font-weight: 900;
+    font-size: clamp(2.2rem, 6vw, 3.4rem);
+    line-height: 1.05;
+    letter-spacing: -0.03em;
+  }
+
+  .greeting .week {
+    font-family: var(--font-body);
+    font-size: 1rem;
+    color: var(--gray);
+    font-weight: 500;
+    margin-top: 6px;
+  }
+
+  /* --- WEEK CALENDAR STRIP --- */
+  .week-strip-wrap {
+    margin-bottom: 36px;
+    opacity: 0;
+    transform: translateY(15px);
+    animation: slideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.2s forwards;
+  }
+
+  .week-strip {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    padding: 20px 0 12px;
+    position: relative;
+  }
+
+  .day-node {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    flex: 1;
+    position: relative;
+    z-index: 2;
+    opacity: 0;
+    transform: translateY(8px);
+  }
+
+  .day-circle {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: 2.5px solid var(--light-gray);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 0.72rem;
+    letter-spacing: 0.02em;
+    color: var(--gray);
+    background: var(--white);
+    transition: all 0.2s ease;
+  }
+
+  .day-label {
+    font-family: var(--font-body);
+    font-size: 0.62rem;
+    font-weight: 600;
+    color: #ccc;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  /* Today */
+  .day-node.today .day-circle {
+    background: var(--black);
+    border-color: var(--black);
+    color: var(--white);
+  }
+
+  .day-node.today .day-label {
+    color: var(--black);
+    font-weight: 700;
+  }
+
+  /* Drop day */
+  .day-node.drop-day .day-circle {
+    background: var(--pink);
+    border-color: var(--pink);
+    color: var(--white);
+    animation: dropPulse 2s ease-in-out infinite;
+  }
+
+  .day-node.drop-day .day-label {
+    color: var(--pink);
+    font-weight: 700;
+  }
+
+  /* Past days */
+  .day-node.past .day-circle {
+    background: #f5f5f5;
+    border-color: #ddd;
+    color: #bbb;
+  }
+
+  /* Connecting line between today and drop day */
+  .strip-connector {
+    position: absolute;
+    top: 39px;
+    height: 3px;
+    background: repeating-linear-gradient(
+      90deg,
+      var(--black) 0px,
+      var(--black) 4px,
+      transparent 4px,
+      transparent 10px
+    );
+    z-index: 1;
+    opacity: 0.2;
+  }
+
+  .drop-countdown {
+    font-family: var(--font-body);
+    font-size: 0.88rem;
+    color: var(--gray);
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding-top: 4px;
+  }
+
+  .drop-countdown .fire {
+    font-size: 1rem;
+  }
+
+  @keyframes dropPulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+  }
+
+  /* --- STATS ROW --- */
+  .stats-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    margin-bottom: 40px;
+  }
+
+  .stats-row .stat-card {
+    opacity: 0;
+    transform: translateY(25px);
+  }
+
+  .stats-row .stat-card:nth-child(1) { animation: slideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.35s forwards; }
+  .stats-row .stat-card:nth-child(2) { animation: slideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.42s forwards; }
+  .stats-row .stat-card:nth-child(3) { animation: slideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.49s forwards; }
+
+  .stat-card {
+    border: 3px solid var(--black);
+    border-radius: 20px;
+    padding: 22px 20px;
+    text-align: center;
+    transition: transform 0.15s ease;
+  }
+
+  .stat-card:hover { transform: translateY(-3px); }
+
+  .stat-card.accent {
+    background: var(--pink);
+    border-color: var(--pink);
+  }
+
+  .stat-card.accent .stat-num,
+  .stat-card.accent .stat-label { color: var(--white); }
+
+  .stat-num {
+    font-family: var(--font-display);
+    font-weight: 900;
+    font-size: 2.4rem;
+    line-height: 1;
+    color: var(--black);
+  }
+
+  .stat-label {
+    font-family: var(--font-body);
+    font-size: 0.82rem;
+    color: var(--gray);
+    font-weight: 600;
+    margin-top: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  /* --- THIS WEEK FEATURED --- */
+  .featured-card {
+    border: 3px solid var(--black);
+    border-radius: 22px;
+    padding: 28px;
+    display: flex;
+    gap: 24px;
+    align-items: stretch;
+    transform: rotate(-1deg) translateY(20px);
+    margin-bottom: 44px;
+    position: relative;
+    opacity: 0;
+    animation: featuredIn 0.7s cubic-bezier(0.16, 1, 0.3, 1) 0.55s forwards;
+    transition: transform 0.2s ease;
+    overflow: hidden;
+  }
+
+  .featured-card:hover { transform: rotate(-1deg) translateY(-3px); }
+
+  .featured-card::before {
+    content: 'THIS WEEK';
+    position: absolute;
+    top: -14px;
+    left: 24px;
+    background: var(--pink);
+    color: var(--white);
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 0.7rem;
+    letter-spacing: 0.08em;
+    padding: 5px 14px;
+    border-radius: 10px;
+    z-index: 3;
+  }
+
+  .featured-art-area {
+    width: 140px;
+    height: 140px;
+    border-radius: 16px;
+    border: 3px solid var(--black);
+    background: var(--pink);
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .featured-art-area svg {
+    width: 50px;
+    height: 50px;
+    color: var(--white);
+    opacity: 0.4;
+  }
+
+  /* Stacked album placeholders in featured */
+  .featured-stack {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .featured-stack-item {
+    width: 60px;
+    height: 60px;
+    border-radius: 10px;
+    border: 2.5px solid rgba(255,255,255,0.5);
+    position: absolute;
+    background: rgba(255,255,255,0.15);
+    backdrop-filter: blur(2px);
+  }
+
+  .featured-stack-item:nth-child(1) {
+    transform: rotate(-8deg) translate(-12px, -6px);
+    background: rgba(255,255,255,0.2);
+  }
+
+  .featured-stack-item:nth-child(2) {
+    transform: rotate(3deg) translate(4px, 2px);
+    background: rgba(255,255,255,0.12);
+  }
+
+  .featured-stack-item:nth-child(3) {
+    transform: rotate(12deg) translate(16px, -8px);
+    background: rgba(0,0,0,0.1);
+  }
+
+  .featured-info {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+
+  .featured-name {
+    font-family: var(--font-display);
+    font-weight: 900;
+    font-size: 1.6rem;
+    line-height: 1.15;
+    margin-bottom: 10px;
+  }
+
+  .featured-meta-row {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 14px;
+    flex-wrap: wrap;
+  }
+
+  .featured-meta-item {
+    font-family: var(--font-body);
+    font-size: 0.85rem;
+    color: var(--gray);
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+
+  .featured-meta-item .dot {
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: var(--gray);
+  }
+
+  .featured-recipients {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+
+  .featured-recipients-label {
+    font-family: var(--font-body);
+    font-size: 0.78rem;
+    color: var(--gray);
+    font-weight: 500;
+  }
+
+  .featured-link {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 0.92rem;
+    color: var(--pink);
+    text-decoration: none;
+    transition: opacity 0.15s;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .featured-link:hover { opacity: 0.7; }
+
+  /* --- CREATE BUTTON --- */
+  .create-btn-wrap {
+    margin-bottom: 32px;
+    opacity: 0;
+    transform: translateY(20px);
+    animation: slideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.65s forwards;
+  }
+
+  .create-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 1rem;
+    padding: 18px 36px;
+    border-radius: 18px;
+    border: none;
+    background: var(--pink);
+    color: var(--white);
+    cursor: pointer;
+    text-decoration: none;
+    transition: transform 0.15s ease;
+  }
+
+  .create-btn:hover { transform: translateY(-2px); }
+  .create-btn:active { transform: translateY(0); }
+
+  /* --- SEGMENTED CONTROL --- */
+  .seg-control {
+    display: inline-flex;
+    border: 3px solid var(--black);
+    border-radius: 100px;
+    padding: 4px;
+    margin-bottom: 28px;
+    opacity: 0;
+    transform: translateY(20px);
+    animation: slideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.72s forwards;
+  }
+
+  .seg-btn {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 0.85rem;
+    padding: 10px 24px;
+    border-radius: 100px;
+    border: none;
+    background: transparent;
+    color: var(--black);
+    cursor: pointer;
+    transition: background 0.2s ease, color 0.2s ease;
+  }
+
+  .seg-btn.active {
+    background: var(--pink);
+    color: var(--white);
+  }
+
+  .seg-btn:not(.active):hover { background: #f0f0f0; }
+
+  /* --- TAB PANELS --- */
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+
+  /* --- QUEUE GRID --- */
+  .queue-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+  }
+
+  .queue-grid .queue-card {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+
+  .queue-grid.animated .queue-card:nth-child(1) { animation: slideUp 0.45s cubic-bezier(0.16, 1, 0.3, 1) 0.0s forwards; }
+  .queue-grid.animated .queue-card:nth-child(2) { animation: slideUp 0.45s cubic-bezier(0.16, 1, 0.3, 1) 0.08s forwards; }
+  .queue-grid.animated .queue-card:nth-child(3) { animation: slideUp 0.45s cubic-bezier(0.16, 1, 0.3, 1) 0.16s forwards; }
+  .queue-grid.animated .queue-card:nth-child(4) { animation: slideUp 0.45s cubic-bezier(0.16, 1, 0.3, 1) 0.24s forwards; }
+
+  /* Initial load delay offset */
+  #tab-drafts .queue-grid.animated .queue-card:nth-child(1) { animation-delay: 0.8s; }
+  #tab-drafts .queue-grid.animated .queue-card:nth-child(2) { animation-delay: 0.88s; }
+  #tab-drafts .queue-grid.animated .queue-card:nth-child(3) { animation-delay: 0.96s; }
+  #tab-drafts .queue-grid.animated .queue-card:nth-child(4) { animation-delay: 1.04s; }
+
+  .queue-card {
+    border: 3px solid var(--black);
+    border-radius: 22px;
+    padding: 22px;
+    background: var(--white);
+    transition: transform 0.15s ease;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .queue-card:hover { transform: translateY(-4px); }
+
+  .queue-card.tilted { transform: rotate(1.2deg); }
+  .queue-card.tilted:hover { transform: rotate(1.2deg) translateY(-4px); }
+
+  .queue-card.tilt-neg { transform: rotate(-0.8deg); }
+  .queue-card.tilt-neg:hover { transform: rotate(-0.8deg) translateY(-4px); }
+
+  /* Sender row in queue card */
+  .queue-sender {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 14px;
+  }
+
+  .queue-sender-name {
+    font-family: var(--font-body);
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--gray);
+  }
+
+  /* Overlapping album art thumbnails */
+  .queue-thumbs {
+    display: flex;
+    margin-bottom: 16px;
+  }
+
+  .queue-thumb {
+    width: 44px;
+    height: 44px;
+    border-radius: 10px;
+    border: 2.5px solid var(--black);
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.9rem;
+    background: #f0f0f0;
+  }
+
+  .queue-thumb:not(:first-child) { margin-left: -12px; }
+
+  .queue-thumb.th-pink {
+    background: var(--pink);
+    border-color: var(--pink);
+  }
+
+  .queue-thumb.th-dark {
+    background: var(--black);
+    border-color: var(--black);
+  }
+
+  .queue-thumb.th-light { background: #e8e8e8; }
+
+  .queue-thumb.th-mid { background: #d0d0d0; }
+
+  .queue-card-name {
+    font-family: var(--font-display);
+    font-weight: 900;
+    font-size: 1.1rem;
+    line-height: 1.2;
+    margin-bottom: 6px;
+  }
+
+  .queue-card-meta {
+    font-family: var(--font-body);
+    font-size: 0.8rem;
+    color: var(--gray);
+    font-weight: 500;
+    margin-bottom: 14px;
+  }
+
+  /* Status pills */
+  .pill {
+    display: inline-block;
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 0.7rem;
+    letter-spacing: 0.04em;
+    padding: 5px 14px;
+    border-radius: 100px;
+  }
+
+  .pill-drafting {
+    border: 2.5px solid var(--black);
+    background: transparent;
+    color: var(--black);
+  }
+
+  .pill-dropped {
+    background: var(--pink);
+    color: var(--white);
+  }
+
+  .pill-received {
+    background: var(--black);
+    color: var(--white);
+  }
+
+  /* Progress bar on draft cards */
+  .queue-progress {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: #f0f0f0;
+    border-radius: 0 0 19px 19px;
+    overflow: hidden;
+  }
+
+  .queue-progress-bar {
+    height: 100%;
+    background: var(--pink);
+    border-radius: 0 2px 2px 0;
+    transition: width 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  /* --- EMPTY STATE --- */
+  .empty-state {
+    text-align: center;
+    padding: 80px 20px;
+  }
+
+  .empty-icon {
+    font-size: 4rem;
+    margin-bottom: 20px;
+    display: block;
+    opacity: 0.7;
+  }
+
+  .empty-state h2 {
+    font-family: var(--font-display);
+    font-weight: 900;
+    font-size: clamp(1.6rem, 4vw, 2.4rem);
+    line-height: 1.1;
+    margin-bottom: 12px;
+  }
+
+  .empty-state p {
+    font-family: var(--font-body);
+    font-size: 1rem;
+    color: var(--gray);
+    font-weight: 500;
+    max-width: 360px;
+    margin: 0 auto;
+    line-height: 1.6;
+  }
+
+  /* --- MOBILE BOTTOM NAV --- */
+  .bottom-nav {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: rgba(255,255,255,0.96);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-top: 3px solid var(--black);
+    border-radius: 20px 20px 0 0;
+    display: none;
+    align-items: flex-end;
+    justify-content: space-around;
+    padding: 12px 0 calc(12px + env(safe-area-inset-bottom, 0px));
+    z-index: 200;
+  }
+
+  .nav-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    text-decoration: none;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .nav-item svg {
+    width: 24px;
+    height: 24px;
+    color: var(--gray);
+  }
+
+  .nav-item.active svg { color: var(--pink); }
+
+  .nav-label {
+    font-family: var(--font-body);
+    font-size: 0.65rem;
+    font-weight: 600;
+    color: var(--gray);
+  }
+
+  .nav-item.active .nav-label { color: var(--pink); }
+
+  .nav-create-circle {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: var(--pink);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: -30px;
+    border: 3px solid var(--black);
+    transition: transform 0.15s ease;
+  }
+
+  .nav-create-circle:active { transform: scale(0.92); }
+
+  .nav-create-circle svg {
+    width: 28px;
+    height: 28px;
+    color: var(--white);
+  }
+
+  /* --- ANIMATIONS --- */
+  @keyframes slideUp {
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes slideInLeft {
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+
+  @keyframes featuredIn {
+    to {
+      opacity: 1;
+      transform: rotate(-1deg) translateY(0);
+    }
+  }
+
+  @keyframes dayAppear {
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  /* --- RESPONSIVE --- */
+  @media (max-width: 768px) {
+    .topbar { padding: 16px 20px; }
+    .main { padding: 28px 20px 0; }
+    .greeting h1 { font-size: clamp(1.8rem, 8vw, 2.6rem); }
+
+    .stats-row { gap: 10px; }
+    .stat-card { padding: 16px 12px; border-radius: 16px; }
+    .stat-num { font-size: 1.8rem; }
+    .stat-label { font-size: 0.72rem; }
+
+    .day-circle { width: 34px; height: 34px; font-size: 0.65rem; }
+    .day-label { font-size: 0.55rem; }
+    .strip-connector { top: 36px; }
+
+    .featured-card {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 16px;
+      padding: 22px;
+    }
+
+    .featured-art-area { width: 100%; height: 100px; }
+    .featured-name { font-size: 1.25rem; }
+
+    .queue-grid { grid-template-columns: 1fr; }
+
+    .queue-card.tilted,
+    .queue-card.tilt-neg { transform: none; }
+
+    .queue-card.tilted:hover,
+    .queue-card.tilt-neg:hover { transform: translateY(-4px); }
+
+    .seg-btn { font-size: 0.78rem; padding: 9px 18px; }
+    .create-btn { width: 100%; justify-content: center; }
+
+    body { padding-bottom: 120px; }
+    .bottom-nav { display: flex; }
+    .create-btn-wrap { display: none; }
+  }
+
+  @media (max-width: 420px) {
+    .stat-card { padding: 14px 8px; border-radius: 14px; }
+    .stat-num { font-size: 1.5rem; }
+    .seg-btn { padding: 8px 14px; font-size: 0.72rem; }
+    .day-circle { width: 30px; height: 30px; font-size: 0.6rem; }
+  }
+</style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<header class="topbar">
+  <a href="#" class="topbar-logo">krun<span>k</span></a>
+  <div class="topbar-right">
+    <div class="topbar-gear">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="3"></circle>
+        <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"></path>
+      </svg>
+    </div>
+    <!-- Dylan avatar — geometric face -->
+    <div class="avatar" title="Dylan">
+      <svg viewBox="0 0 42 42" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="21" cy="21" r="21" fill="#111"/>
+        <circle cx="14" cy="17" r="3" fill="#fff"/>
+        <circle cx="28" cy="17" r="3" fill="#fff"/>
+        <circle cx="14" cy="17" r="1.5" fill="#111"/>
+        <circle cx="28" cy="17" r="1.5" fill="#111"/>
+        <rect x="12" y="27" width="18" height="3" rx="1.5" fill="#ff2d78"/>
+        <rect x="17" y="10" width="8" height="3" rx="1.5" fill="#ff2d78" transform="rotate(-8 17 10)"/>
+      </svg>
+    </div>
+  </div>
+</header>
+
+<main class="main">
+
+  <!-- GREETING -->
+  <div class="greeting">
+    <h1>Hey Dylan</h1>
+    <div class="week">Week of March 31</div>
+  </div>
+
+  <!-- WEEK CALENDAR STRIP -->
+  <div class="week-strip-wrap">
+    <div class="week-strip" id="weekStrip">
+      <div class="day-node past" data-idx="0">
+        <div class="day-circle">M</div>
+        <span class="day-label">31</span>
+      </div>
+      <div class="day-node today" data-idx="1">
+        <div class="day-circle">T</div>
+        <span class="day-label">1</span>
+      </div>
+      <div class="day-node" data-idx="2">
+        <div class="day-circle">W</div>
+        <span class="day-label">2</span>
+      </div>
+      <div class="day-node" data-idx="3">
+        <div class="day-circle">T</div>
+        <span class="day-label">3</span>
+      </div>
+      <div class="day-node drop-day" data-idx="4">
+        <div class="day-circle">F</div>
+        <span class="day-label">4</span>
+      </div>
+      <div class="day-node" data-idx="5">
+        <div class="day-circle">S</div>
+        <span class="day-label">5</span>
+      </div>
+      <div class="day-node" data-idx="6">
+        <div class="day-circle">S</div>
+        <span class="day-label">6</span>
+      </div>
+      <!-- Connecting dashes drawn by JS -->
+    </div>
+    <div class="drop-countdown">
+      <span class="fire">&#x1F525;</span>
+      Drops in 3 days
+    </div>
+  </div>
+
+  <!-- STATS ROW -->
+  <div class="stats-row">
+    <div class="stat-card">
+      <div class="stat-num">7</div>
+      <div class="stat-label">Queues Sent</div>
+    </div>
+    <div class="stat-card accent">
+      <div class="stat-num">34</div>
+      <div class="stat-label">Songs Shared</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num">4</div>
+      <div class="stat-label">Friends</div>
+    </div>
+  </div>
+
+  <!-- THIS WEEK FEATURED -->
+  <div class="featured-card">
+    <div class="featured-art-area">
+      <div class="featured-stack">
+        <div class="featured-stack-item"></div>
+        <div class="featured-stack-item"></div>
+        <div class="featured-stack-item"></div>
+      </div>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M9 18V5l12-2v13"></path>
+        <circle cx="6" cy="18" r="3"></circle>
+        <circle cx="18" cy="16" r="3"></circle>
+      </svg>
+    </div>
+    <div class="featured-info">
+      <div class="featured-name">Midnight Static</div>
+      <div class="featured-meta-row">
+        <span class="featured-meta-item">3 songs</span>
+        <span class="featured-meta-item"><span class="dot"></span></span>
+        <span class="featured-meta-item">2 friends</span>
+        <span class="featured-meta-item"><span class="dot"></span></span>
+        <span class="featured-meta-item">Drops Friday</span>
+      </div>
+      <div class="featured-recipients">
+        <div class="avatar-row">
+          <!-- Mia avatar -->
+          <div class="avatar avatar-xs" title="Mia" style="border-color: var(--pink);">
+            <svg viewBox="0 0 26 26" fill="none"><circle cx="13" cy="13" r="13" fill="#ff2d78"/><circle cx="9" cy="11" r="2" fill="#fff"/><circle cx="17" cy="11" r="2" fill="#fff"/><path d="M9 18c2 2 6 2 8 0" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/></svg>
+          </div>
+          <!-- Jake avatar -->
+          <div class="avatar avatar-xs" title="Jake" style="border-color: var(--black);">
+            <svg viewBox="0 0 26 26" fill="none"><circle cx="13" cy="13" r="13" fill="#111"/><rect x="7" y="9" width="5" height="4" rx="1" fill="#fff"/><rect x="14" y="9" width="5" height="4" rx="1" fill="#fff"/><rect x="9" y="17" width="8" height="2.5" rx="1.25" fill="#fff"/></svg>
+          </div>
+        </div>
+        <span class="featured-recipients-label">Mia, Jake</span>
+      </div>
+      <a href="#" class="featured-link">Keep adding <span>&rarr;</span></a>
+    </div>
+  </div>
+
+  <!-- CREATE BUTTON (desktop) -->
+  <div class="create-btn-wrap">
+    <a href="#" class="create-btn">New queue +</a>
+  </div>
+
+  <!-- SEGMENTED CONTROL -->
+  <div class="seg-control">
+    <button class="seg-btn active" data-tab="drafts">Drafts</button>
+    <button class="seg-btn" data-tab="sent">Sent</button>
+    <button class="seg-btn" data-tab="received">Received</button>
+  </div>
+
+  <!-- TAB: DRAFTS -->
+  <div class="tab-panel active" id="tab-drafts">
+    <div class="queue-grid animated">
+
+      <div class="queue-card tilted">
+        <div class="queue-thumbs">
+          <div class="queue-thumb th-pink"></div>
+          <div class="queue-thumb th-dark"></div>
+          <div class="queue-thumb th-light"></div>
+        </div>
+        <div class="queue-card-name">Midnight Static</div>
+        <div class="queue-card-meta">Week of Mar 31 &middot; 3 songs</div>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <span class="pill pill-drafting">Drafting</span>
+          <span style="font-family:var(--font-body);font-size:0.72rem;color:var(--gray);font-weight:500;">4/7 days</span>
+        </div>
+        <div class="queue-progress">
+          <div class="queue-progress-bar" style="width: 57%;"></div>
+        </div>
+      </div>
+
+      <div class="queue-card">
+        <div class="queue-thumbs">
+          <div class="queue-thumb th-light"></div>
+          <div class="queue-thumb th-pink"></div>
+          <div class="queue-thumb th-mid"></div>
+        </div>
+        <div class="queue-card-name">Rooftop Signals</div>
+        <div class="queue-card-meta">Week of Mar 24 &middot; 2 songs</div>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <span class="pill pill-drafting">Drafting</span>
+          <span style="font-family:var(--font-body);font-size:0.72rem;color:var(--gray);font-weight:500;">7/7 days</span>
+        </div>
+        <div class="queue-progress">
+          <div class="queue-progress-bar" style="width: 100%;"></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- TAB: SENT -->
+  <div class="tab-panel" id="tab-sent">
+    <div class="queue-grid">
+
+      <div class="queue-card tilt-neg">
+        <div class="queue-sender">
+          <div class="avatar avatar-sm">
+            <svg viewBox="0 0 30 30" fill="none"><circle cx="15" cy="15" r="15" fill="#111"/><circle cx="10" cy="12" r="2.5" fill="#fff"/><circle cx="20" cy="12" r="2.5" fill="#fff"/><circle cx="10" cy="12" r="1.2" fill="#111"/><circle cx="20" cy="12" r="1.2" fill="#111"/><rect x="9" y="21" width="12" height="2.5" rx="1.25" fill="#ff2d78"/></svg>
+          </div>
+          <span class="queue-sender-name">Sent to Mia</span>
+        </div>
+        <div class="queue-thumbs">
+          <div class="queue-thumb th-dark"></div>
+          <div class="queue-thumb th-pink"></div>
+          <div class="queue-thumb th-light"></div>
+        </div>
+        <div class="queue-card-name">Golden Hour Drive</div>
+        <div class="queue-card-meta">Week of Mar 24 &middot; 5 songs</div>
+        <span class="pill pill-dropped">Dropped</span>
+      </div>
+
+      <div class="queue-card tilted">
+        <div class="queue-sender">
+          <div class="avatar avatar-sm" style="border-color: var(--gray);">
+            <svg viewBox="0 0 30 30" fill="none"><circle cx="15" cy="15" r="15" fill="#888"/><rect x="8" y="10" width="5" height="5" rx="1.5" fill="#fff"/><rect x="17" y="10" width="5" height="5" rx="1.5" fill="#fff"/><circle cx="15" cy="22" r="3" fill="#fff"/></svg>
+          </div>
+          <span class="queue-sender-name">Sent to Jake</span>
+        </div>
+        <div class="queue-thumbs">
+          <div class="queue-thumb th-light"></div>
+          <div class="queue-thumb th-dark"></div>
+          <div class="queue-thumb th-pink"></div>
+        </div>
+        <div class="queue-card-name">4am Comedown</div>
+        <div class="queue-card-meta">Week of Mar 17 &middot; 5 songs</div>
+        <span class="pill pill-dropped">Dropped</span>
+      </div>
+
+      <div class="queue-card">
+        <div class="queue-sender">
+          <div class="avatar avatar-sm" style="border-color: var(--pink);">
+            <svg viewBox="0 0 30 30" fill="none"><circle cx="15" cy="15" r="15" fill="#ff2d78"/><circle cx="10" cy="12" r="2" fill="#fff"/><circle cx="20" cy="12" r="2" fill="#fff"/><path d="M10 20l5 3 5-3" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </div>
+          <span class="queue-sender-name">Sent to Lena</span>
+        </div>
+        <div class="queue-thumbs">
+          <div class="queue-thumb th-pink"></div>
+          <div class="queue-thumb th-mid"></div>
+          <div class="queue-thumb th-dark"></div>
+        </div>
+        <div class="queue-card-name">Asphalt Hymns</div>
+        <div class="queue-card-meta">Week of Mar 10 &middot; 4 songs</div>
+        <span class="pill pill-dropped">Dropped</span>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- TAB: RECEIVED -->
+  <div class="tab-panel" id="tab-received">
+    <div class="empty-state">
+      <span class="empty-icon">&#x1F4E5;</span>
+      <h2>No drops yet</h2>
+      <p>When your friends send you music, it lands here.</p>
+    </div>
+  </div>
+
+</main>
+
+<!-- MOBILE BOTTOM NAV -->
+<nav class="bottom-nav">
+  <a class="nav-item active" href="#">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"></path>
+      <polyline points="9 22 9 12 15 12 15 22"></polyline>
+    </svg>
+    <span class="nav-label">Home</span>
+  </a>
+  <a class="nav-item" href="#">
+    <div class="nav-create-circle">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="12" y1="5" x2="12" y2="19"></line>
+        <line x1="5" y1="12" x2="19" y2="12"></line>
+      </svg>
+    </div>
+    <span class="nav-label">Create</span>
+  </a>
+  <a class="nav-item" href="#">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="12" cy="12" r="3"></circle>
+      <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"></path>
+    </svg>
+    <span class="nav-label">Settings</span>
+  </a>
+</nav>
+
+<script>
+  // --- Week strip sequential animation ---
+  const days = document.querySelectorAll('.day-node');
+  days.forEach((day, i) => {
+    setTimeout(() => {
+      day.style.animation = `dayAppear 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards`;
+    }, 300 + i * 55);
+  });
+
+  // --- Draw connecting dashes between today and drop day ---
+  function drawConnector() {
+    const strip = document.getElementById('weekStrip');
+    const existing = strip.querySelector('.strip-connector');
+    if (existing) existing.remove();
+
+    const todayEl = strip.querySelector('.day-node.today');
+    const dropEl = strip.querySelector('.day-node.drop-day');
+    if (!todayEl || !dropEl) return;
+
+    const todayCircle = todayEl.querySelector('.day-circle');
+    const dropCircle = dropEl.querySelector('.day-circle');
+    const stripRect = strip.getBoundingClientRect();
+
+    const startX = todayCircle.getBoundingClientRect().right - stripRect.left;
+    const endX = dropCircle.getBoundingClientRect().left - stripRect.left;
+
+    const connector = document.createElement('div');
+    connector.className = 'strip-connector';
+    connector.style.left = startX + 'px';
+    connector.style.width = Math.max(0, endX - startX) + 'px';
+    strip.appendChild(connector);
+  }
+
+  // Draw after day animations settle
+  setTimeout(drawConnector, 800);
+  window.addEventListener('resize', drawConnector);
+
+  // --- Tab switching ---
+  const segBtns = document.querySelectorAll('.seg-btn');
+  const panels = document.querySelectorAll('.tab-panel');
+
+  segBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      const tab = btn.dataset.tab;
+      segBtns.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+
+      panels.forEach(p => {
+        p.classList.remove('active');
+        if (p.id === 'tab-' + tab) {
+          p.classList.add('active');
+          // Re-trigger staggered card animation
+          const grid = p.querySelector('.queue-grid');
+          if (grid) {
+            grid.classList.remove('animated');
+            const cards = grid.querySelectorAll('.queue-card');
+            cards.forEach(c => {
+              c.style.opacity = '0';
+              c.style.transform = 'translateY(20px)';
+              c.style.animation = 'none';
+            });
+            // Force reflow, then re-animate
+            void grid.offsetHeight;
+            grid.classList.add('animated');
+            cards.forEach((c, i) => {
+              c.style.animation = '';
+              c.style.animation = `slideUp 0.45s cubic-bezier(0.16, 1, 0.3, 1) ${i * 0.08}s forwards`;
+            });
+          }
+        }
+      });
+    });
+  });
+
+  // --- Animate progress bars on load ---
+  setTimeout(() => {
+    document.querySelectorAll('.queue-progress-bar').forEach(bar => {
+      const w = bar.style.width;
+      bar.style.width = '0%';
+      setTimeout(() => { bar.style.width = w; }, 100);
+    });
+  }, 900);
+</script>
+
+</body>
+</html>

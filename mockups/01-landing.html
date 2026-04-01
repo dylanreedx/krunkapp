@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>krunked — Share your weekly sound</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --green: #34d399;
+    --green-dim: #2bb583;
+    --bg: #faf9f7;
+    --card: #fff;
+    --black: #111;
+    --gray-600: #555;
+    --gray-400: #999;
+    --gray-200: #e5e5e3;
+    --radius-sm: 8px;
+    --radius-md: 12px;
+    --radius-lg: 18px;
+    --radius-xl: 22px;
+    --border: 2px solid var(--black);
+    --shadow: 0 2px 12px rgba(0,0,0,0.06);
+    --font-heading: 'Plus Jakarta Sans', sans-serif;
+    --font-body: 'Inter', sans-serif;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: var(--font-body);
+    background: var(--bg);
+    color: var(--black);
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+  }
+
+  /* Grain overlay */
+  body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 9999;
+    opacity: 0.022;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+    background-repeat: repeat;
+    background-size: 180px;
+  }
+
+  /* ─── NAV ─── */
+  nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 40px;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+
+  .logo-group {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .logo {
+    font-family: var(--font-heading);
+    font-weight: 800;
+    font-size: 1.55rem;
+    letter-spacing: -0.5px;
+    color: var(--black);
+    text-decoration: none;
+  }
+
+  .badge {
+    font-family: var(--font-body);
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    background: var(--green);
+    color: var(--black);
+    padding: 3px 10px;
+    border-radius: 100px;
+  }
+
+  .nav-links {
+    display: flex;
+    gap: 28px;
+    list-style: none;
+  }
+
+  .nav-links a {
+    font-size: 0.88rem;
+    font-weight: 500;
+    color: var(--gray-600);
+    text-decoration: none;
+    transition: color 0.2s;
+  }
+
+  .nav-links a:hover { color: var(--black); }
+
+  /* ─── HERO ─── */
+  .hero {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 60px 40px 80px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 64px;
+    align-items: center;
+  }
+
+  .hero-text { max-width: 520px; }
+
+  .hero h1 {
+    font-family: var(--font-heading);
+    font-weight: 800;
+    font-size: clamp(2.4rem, 4.5vw, 3.5rem);
+    line-height: 1.08;
+    letter-spacing: -1.5px;
+    color: var(--black);
+    margin-bottom: 20px;
+  }
+
+  .hero h1 .accent {
+    color: var(--green-dim);
+  }
+
+  .hero .subtitle {
+    font-size: 1.1rem;
+    line-height: 1.6;
+    color: var(--gray-600);
+    max-width: 420px;
+    margin-bottom: 36px;
+  }
+
+  .auth-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    max-width: 320px;
+  }
+
+  .auth-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 15px 24px;
+    border-radius: var(--radius-md);
+    border: var(--border);
+    font-family: var(--font-body);
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.15s, box-shadow 0.15s;
+    text-decoration: none;
+    line-height: 1;
+  }
+
+  .auth-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+  }
+
+  .auth-btn:active {
+    transform: translateY(0);
+  }
+
+  .auth-btn.spotify {
+    background: var(--green);
+    color: #fff;
+    border-color: var(--green-dim);
+  }
+
+  .auth-btn.apple {
+    background: var(--black);
+    color: #fff;
+  }
+
+  .auth-btn svg {
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
+  }
+
+  .fine-print {
+    margin-top: 18px;
+    font-size: 0.8rem;
+    color: var(--gray-400);
+    letter-spacing: 0.2px;
+  }
+
+  .fine-print span {
+    margin: 0 4px;
+    opacity: 0.5;
+  }
+
+  /* ─── QUEUE CARD ─── */
+  .queue-card-wrapper {
+    display: flex;
+    justify-content: center;
+  }
+
+  .queue-card {
+    background: var(--card);
+    border: var(--border);
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow);
+    width: 100%;
+    max-width: 380px;
+    overflow: hidden;
+  }
+
+  .queue-cover {
+    width: 100%;
+    aspect-ratio: 1 / 0.7;
+    background: linear-gradient(135deg, #1a3a2a 0%, #0d332b 30%, #34d399 70%, #a7f3d0 100%);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .queue-cover::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(ellipse at 30% 60%, rgba(52, 211, 153, 0.3) 0%, transparent 60%),
+      radial-gradient(ellipse at 70% 30%, rgba(255,255,255,0.08) 0%, transparent 50%);
+  }
+
+  .queue-cover-label {
+    position: absolute;
+    bottom: 14px;
+    left: 18px;
+    z-index: 1;
+    font-family: var(--font-heading);
+    font-weight: 700;
+    font-size: 1.35rem;
+    color: #fff;
+    text-shadow: 0 1px 8px rgba(0,0,0,0.3);
+    letter-spacing: -0.3px;
+  }
+
+  .queue-body {
+    padding: 18px 20px 20px;
+  }
+
+  .queue-meta {
+    font-size: 0.78rem;
+    color: var(--gray-400);
+    margin-bottom: 16px;
+    font-weight: 500;
+  }
+
+  .queue-songs {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .song-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .song-num {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: var(--green);
+    color: var(--black);
+    font-size: 0.7rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .song-art {
+    width: 40px;
+    height: 40px;
+    border-radius: 6px;
+    flex-shrink: 0;
+  }
+
+  .song-art-1 { background: #d4c5b0; }
+  .song-art-2 { background: #b8c9d4; }
+  .song-art-3 { background: #c9b8d4; }
+  .song-art-4 { background: #d4c1b8; }
+
+  .song-info {
+    min-width: 0;
+    flex: 1;
+  }
+
+  .song-title {
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: var(--black);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .song-artist {
+    font-size: 0.76rem;
+    color: var(--gray-400);
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  /* ─── FEATURES ─── */
+  .features {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 40px 80px;
+  }
+
+  .features-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+  }
+
+  .feature-card {
+    background: var(--card);
+    border: var(--border);
+    border-radius: var(--radius-lg);
+    padding: 28px 24px;
+    box-shadow: var(--shadow);
+    text-align: center;
+  }
+
+  .feature-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    background: var(--bg);
+    border: 1.5px solid var(--gray-200);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 14px;
+  }
+
+  .feature-icon svg {
+    width: 22px;
+    height: 22px;
+    color: var(--black);
+  }
+
+  .feature-card h3 {
+    font-family: var(--font-heading);
+    font-weight: 700;
+    font-size: 1rem;
+    margin-bottom: 6px;
+    letter-spacing: -0.3px;
+  }
+
+  .feature-card p {
+    font-size: 0.82rem;
+    color: var(--gray-400);
+    line-height: 1.5;
+    font-weight: 500;
+  }
+
+  /* ─── ANIMATIONS ─── */
+  .fade-up {
+    opacity: 0;
+    transform: translateY(24px);
+    transition: opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1), transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .fade-up.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  .fade-up.d1 { transition-delay: 0.08s; }
+  .fade-up.d2 { transition-delay: 0.18s; }
+  .fade-up.d3 { transition-delay: 0.28s; }
+  .fade-up.d4 { transition-delay: 0.38s; }
+  .fade-up.d5 { transition-delay: 0.48s; }
+
+  /* Queue card stagger */
+  .queue-card .song-row {
+    opacity: 0;
+    transform: translateX(-12px);
+    transition: opacity 0.5s ease, transform 0.5s ease;
+  }
+
+  .queue-card.visible .song-row:nth-child(1) { opacity: 1; transform: translateX(0); transition-delay: 0.4s; }
+  .queue-card.visible .song-row:nth-child(2) { opacity: 1; transform: translateX(0); transition-delay: 0.5s; }
+  .queue-card.visible .song-row:nth-child(3) { opacity: 1; transform: translateX(0); transition-delay: 0.6s; }
+  .queue-card.visible .song-row:nth-child(4) { opacity: 1; transform: translateX(0); transition-delay: 0.7s; }
+
+  /* ─── RESPONSIVE ─── */
+  @media (max-width: 840px) {
+    nav { padding: 16px 24px; }
+    .nav-links { display: none; }
+
+    .hero {
+      grid-template-columns: 1fr;
+      gap: 48px;
+      padding: 40px 24px 60px;
+      text-align: center;
+    }
+
+    .hero-text {
+      max-width: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .hero .subtitle { max-width: 100%; }
+
+    .auth-buttons {
+      max-width: 100%;
+      width: 100%;
+    }
+
+    .queue-card { max-width: 340px; }
+
+    .features { padding: 0 24px 60px; }
+    .features-grid {
+      grid-template-columns: 1fr;
+      max-width: 400px;
+      margin: 0 auto;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .hero h1 { font-size: 2rem; }
+  }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav class="fade-up">
+  <div class="logo-group">
+    <a href="#" class="logo">krunked</a>
+    <span class="badge">beta</span>
+  </div>
+  <ul class="nav-links">
+    <li><a href="#">How it works</a></li>
+    <li><a href="#">About</a></li>
+  </ul>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-text">
+    <h1 class="fade-up d1">Share your<br>weekly <span class="accent">sound</span></h1>
+    <p class="subtitle fade-up d2">Curate weekly music queues for your friends. Cross-platform. AI-generated covers.</p>
+    <div class="auth-buttons fade-up d3">
+      <a href="#" class="auth-btn spotify">
+        <!-- Spotify icon -->
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z"/></svg>
+        Continue with Spotify
+      </a>
+      <a href="#" class="auth-btn apple">
+        <!-- Apple icon -->
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
+        Continue with Apple Music
+      </a>
+    </div>
+    <p class="fine-print fade-up d4">Free <span>&middot;</span> No credit card <span>&middot;</span> Takes 10 seconds</p>
+  </div>
+
+  <!-- QUEUE CARD MOCK -->
+  <div class="queue-card-wrapper fade-up d3">
+    <div class="queue-card">
+      <div class="queue-cover">
+        <span class="queue-cover-label">Golden Hour Drive</span>
+      </div>
+      <div class="queue-body">
+        <p class="queue-meta">Week of Apr 6 &middot; 4 songs &middot; from Dylan</p>
+        <div class="queue-songs">
+          <div class="song-row">
+            <span class="song-num">1</span>
+            <div class="song-art song-art-1"></div>
+            <div class="song-info">
+              <div class="song-title">Sunset Lover</div>
+              <div class="song-artist">Petit Biscuit</div>
+            </div>
+          </div>
+          <div class="song-row">
+            <span class="song-num">2</span>
+            <div class="song-art song-art-2"></div>
+            <div class="song-info">
+              <div class="song-title">Electric Feel</div>
+              <div class="song-artist">MGMT</div>
+            </div>
+          </div>
+          <div class="song-row">
+            <span class="song-num">3</span>
+            <div class="song-art song-art-3"></div>
+            <div class="song-info">
+              <div class="song-title">Nights</div>
+              <div class="song-artist">Frank Ocean</div>
+            </div>
+          </div>
+          <div class="song-row">
+            <span class="song-num">4</span>
+            <div class="song-art song-art-4"></div>
+            <div class="song-info">
+              <div class="song-title">Heat Waves</div>
+              <div class="song-artist">Glass Animals</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FEATURES -->
+<section class="features">
+  <div class="features-grid">
+    <div class="feature-card fade-up d3">
+      <div class="feature-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11a9 9 0 0 1 9 9"/><path d="M4 4a16 16 0 0 1 16 16"/><circle cx="5" cy="19" r="1"/></svg>
+      </div>
+      <h3>Cross-platform</h3>
+      <p>Spotify and Apple Music friends in the same queue. Songs match via ISRC.</p>
+    </div>
+    <div class="feature-card fade-up d4">
+      <div class="feature-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>
+      </div>
+      <h3>AI Covers</h3>
+      <p>Every queue gets a unique AI-generated cover. Cinematic, bold, one-of-a-kind.</p>
+    </div>
+    <div class="feature-card fade-up d5">
+      <div class="feature-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+      </div>
+      <h3>Weekly Drops</h3>
+      <p>Queues drop every Sunday morning. AI names it, art generates, playlists land.</p>
+    </div>
+  </div>
+</section>
+
+<script>
+  // Intersection Observer for fade-up animations
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('visible');
+      }
+    });
+  }, { threshold: 0.15, rootMargin: '0px 0px -40px 0px' });
+
+  document.querySelectorAll('.fade-up, .queue-card').forEach(el => observer.observe(el));
+
+  // Trigger nav immediately (already in viewport)
+  requestAnimationFrame(() => {
+    document.querySelectorAll('nav.fade-up').forEach(el => el.classList.add('visible'));
+  });
+</script>
+</body>
+</html>

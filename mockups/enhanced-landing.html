@@ -1,0 +1,883 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>krunk — your friends' ears, your taste</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@400;700;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --pink: #ff2d78;
+    --black: #111;
+    --gray: #888;
+    --white: #ffffff;
+    --font-display: 'Unbounded', sans-serif;
+    --font-body: 'Inter', sans-serif;
+    --border: 3px solid var(--black);
+    --radius: 20px;
+  }
+
+  body {
+    background: var(--white);
+    color: var(--black);
+    font-family: var(--font-body);
+    overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+    /* Subtle dot grid background */
+    background-image: radial-gradient(circle, rgba(0,0,0,0.045) 1px, transparent 1px);
+    background-size: 24px 24px;
+  }
+
+  /* --- MASSIVE HEADLINE — bleeds off left edge --- */
+  .poster-headline {
+    padding: 80px 0 0 0;
+    position: relative;
+    overflow: visible;
+  }
+
+  .krunk-word {
+    font-family: var(--font-display);
+    font-weight: 900;
+    font-size: 22vw;
+    line-height: 0.85;
+    letter-spacing: -0.04em;
+    color: var(--black);
+    margin-left: -3.5vw;
+    display: block;
+    opacity: 0;
+    transform: translateX(-120px);
+    animation: slideFromLeft 0.9s cubic-bezier(0.16, 1, 0.3, 1) 0.1s forwards;
+    user-select: none;
+  }
+
+  .krunk-word span {
+    color: var(--pink);
+  }
+
+  .sub-headline {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: clamp(1.3rem, 3vw, 2.6rem);
+    line-height: 1.2;
+    margin: 24px 0 0 60px;
+    max-width: 520px;
+    opacity: 0;
+    transform: translateY(30px);
+    animation: fadeUp 0.7s cubic-bezier(0.16, 1, 0.3, 1) 0.45s forwards;
+  }
+
+  .sub-headline .highlight {
+    color: var(--pink);
+  }
+
+  /* --- CONTENT AREA — asymmetric layout --- */
+  .content-area {
+    display: grid;
+    grid-template-columns: 1.15fr 0.85fr;
+    gap: 30px;
+    padding: 60px 40px 80px 60px;
+    align-items: start;
+    position: relative;
+  }
+
+  .left-col {
+    padding-top: 20px;
+  }
+
+  .description {
+    font-family: var(--font-body);
+    font-size: clamp(1rem, 1.3vw, 1.2rem);
+    line-height: 1.75;
+    color: var(--black);
+    max-width: 500px;
+    margin-bottom: 36px;
+    opacity: 0;
+    transform: translateY(25px);
+    animation: fadeUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.6s forwards;
+  }
+
+  .description strong {
+    font-weight: 700;
+  }
+
+  /* --- PINK ACCENT BAR --- */
+  .accent-bar {
+    width: 80px;
+    height: 6px;
+    background: var(--pink);
+    border-radius: 3px;
+    margin-bottom: 24px;
+    opacity: 0;
+    animation: fadeUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.55s forwards;
+  }
+
+  /* --- AUTH BUTTONS --- */
+  .auth-buttons {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin-bottom: 28px;
+    opacity: 0;
+    transform: translateY(20px);
+    animation: fadeUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.75s forwards;
+  }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 0.95rem;
+    padding: 18px 32px;
+    border-radius: 16px;
+    border: none;
+    cursor: pointer;
+    text-decoration: none;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+  }
+
+  .btn:hover { transform: translateY(-2px); }
+  .btn:active { transform: translateY(0); }
+
+  .btn-spotify {
+    background: var(--pink);
+    color: var(--white);
+  }
+  .btn-spotify:hover {
+    box-shadow: 0 6px 24px rgba(255, 45, 120, 0.35);
+  }
+
+  .btn-apple {
+    background: var(--black);
+    color: var(--white);
+  }
+  .btn-apple:hover {
+    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.25);
+  }
+
+  .btn svg {
+    width: 22px;
+    height: 22px;
+    flex-shrink: 0;
+  }
+
+  /* --- FREE LINE --- */
+  .free-line {
+    font-family: var(--font-body);
+    font-size: 0.82rem;
+    color: var(--gray);
+    font-weight: 500;
+    margin-bottom: 32px;
+    opacity: 0;
+    transform: translateY(15px);
+    animation: fadeUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.85s forwards;
+  }
+
+  /* --- AVATAR TEASE ROW --- */
+  .avatar-tease {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    opacity: 0;
+    transform: translateY(15px);
+    animation: fadeUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.95s forwards;
+  }
+
+  .avatar-tease-label {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 0.75rem;
+    letter-spacing: 0.02em;
+    color: var(--gray);
+  }
+
+  .mini-avatars {
+    display: flex;
+    gap: 6px;
+  }
+
+  .mini-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border: 2px solid var(--black);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.7rem;
+    font-weight: 700;
+    cursor: default;
+    transition: transform 0.15s ease;
+  }
+  .mini-avatar:hover { transform: scale(1.12); }
+
+  .mini-avatar.av-pink { background: var(--pink); color: white; border-color: var(--pink); }
+  .mini-avatar.av-black { background: var(--black); color: white; }
+  .mini-avatar.av-outline { background: white; color: var(--black); }
+  .mini-avatar.av-gray { background: #e8e8e8; color: var(--black); }
+
+  /* Stylized faces on mini avatars */
+  .mini-avatar .face {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    line-height: 1;
+  }
+  .mini-avatar .eyes {
+    display: flex;
+    gap: 4px;
+    font-size: 4px;
+  }
+  .mini-avatar .eyes span {
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: currentColor;
+    display: block;
+  }
+  .mini-avatar .mouth {
+    width: 7px;
+    height: 3.5px;
+    border-bottom: 2px solid currentColor;
+    border-radius: 0 0 7px 7px;
+  }
+  .mini-avatar .mouth-flat {
+    width: 6px;
+    height: 0;
+    border-bottom: 2px solid currentColor;
+  }
+  .mini-avatar .mouth-open {
+    width: 5px;
+    height: 5px;
+    border: 2px solid currentColor;
+    border-radius: 50%;
+    background: transparent;
+  }
+
+  /* --- QUEUE CARD — slides from right, slightly overlaps edge --- */
+  .right-col {
+    display: flex;
+    justify-content: flex-end;
+    padding-top: 10px;
+    margin-right: -20px;
+  }
+
+  .queue-card {
+    background: var(--white);
+    border: 3px solid var(--black);
+    border-radius: 22px;
+    padding: 28px;
+    width: 100%;
+    max-width: 380px;
+    opacity: 0;
+    transform: translateX(80px) rotate(2.5deg);
+    animation: cardSlideIn 0.9s cubic-bezier(0.16, 1, 0.3, 1) 0.65s forwards;
+    position: relative;
+  }
+
+  .queue-card::before {
+    content: 'THIS WEEK';
+    position: absolute;
+    top: -14px;
+    right: 24px;
+    background: var(--pink);
+    color: var(--white);
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 0.7rem;
+    letter-spacing: 0.08em;
+    padding: 5px 14px;
+    border-radius: 10px;
+  }
+
+  .queue-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    margin-bottom: 20px;
+  }
+
+  /* Stylized avatar for the sender */
+  .sender-avatar {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    border: 3px solid var(--black);
+    background: #FFE14D;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    position: relative;
+  }
+  .sender-avatar .avatar-face {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+  }
+  .sender-avatar .av-eyes {
+    display: flex;
+    gap: 7px;
+  }
+  .sender-avatar .av-eyes span {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--black);
+    display: block;
+  }
+  .sender-avatar .av-mouth {
+    width: 12px;
+    height: 6px;
+    border-bottom: 2.5px solid var(--black);
+    border-radius: 0 0 12px 12px;
+  }
+
+  .queue-header-text { flex: 1; }
+
+  .queue-title {
+    font-family: var(--font-display);
+    font-weight: 900;
+    font-size: 1.25rem;
+    line-height: 1.2;
+    margin-bottom: 3px;
+  }
+
+  .queue-meta {
+    font-family: var(--font-body);
+    font-size: 0.78rem;
+    color: var(--gray);
+    font-weight: 500;
+  }
+
+  .queue-songs {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .song {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 12px 14px;
+    border-radius: 14px;
+    transition: background 0.15s ease;
+  }
+  .song:hover { background: #f5f5f5; }
+
+  .song-num {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 0.85rem;
+    color: var(--gray);
+    width: 22px;
+    text-align: center;
+    flex-shrink: 0;
+  }
+
+  .song-art {
+    width: 44px;
+    height: 44px;
+    border-radius: 10px;
+    border: 2px solid var(--black);
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    background: #f8f8f8;
+  }
+  .song-art.pink-bg {
+    background: var(--pink);
+    border-color: var(--pink);
+  }
+
+  .song-info { flex: 1; min-width: 0; }
+
+  .song-name {
+    font-family: var(--font-body);
+    font-weight: 600;
+    font-size: 0.9rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .song-artist {
+    font-family: var(--font-body);
+    font-size: 0.78rem;
+    color: var(--gray);
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .song-duration {
+    font-family: var(--font-body);
+    font-size: 0.78rem;
+    color: var(--gray);
+    flex-shrink: 0;
+  }
+
+  /* --- FEATURES --- */
+  .features {
+    padding: 0 60px 100px;
+  }
+
+  .features-label {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 0.7rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--gray);
+    margin-bottom: 28px;
+    opacity: 0;
+    animation: fadeUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.85s forwards;
+  }
+
+  .features-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
+    max-width: 960px;
+  }
+
+  .feature-card {
+    border: 3px solid var(--black);
+    border-radius: 20px;
+    padding: 28px 24px;
+    opacity: 0;
+    transform: translateY(40px);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .feature-card:nth-child(1) {
+    animation: featureIn 0.7s cubic-bezier(0.16, 1, 0.3, 1) 1.0s forwards;
+  }
+  .feature-card:nth-child(2) {
+    animation: featureInRotate 0.7s cubic-bezier(0.16, 1, 0.3, 1) 1.15s forwards;
+  }
+  .feature-card:nth-child(3) {
+    animation: featureIn 0.7s cubic-bezier(0.16, 1, 0.3, 1) 1.3s forwards;
+  }
+
+  .feature-visual {
+    margin-bottom: 18px;
+    height: 56px;
+    display: flex;
+    align-items: center;
+  }
+
+  /* Cross-platform: overlapping service icons */
+  .platform-icons {
+    display: flex;
+    align-items: center;
+  }
+  .platform-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 14px;
+    border: 2.5px solid var(--black);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: white;
+  }
+  .platform-icon:nth-child(2) {
+    margin-left: -14px;
+    background: var(--black);
+  }
+  .platform-icon svg { width: 22px; height: 22px; }
+
+  /* AI Covers: tiny mock album art */
+  .ai-cover-mock {
+    width: 52px;
+    height: 52px;
+    border-radius: 12px;
+    border: 2.5px solid var(--black);
+    background: var(--pink);
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .ai-cover-mock::after {
+    content: '';
+    position: absolute;
+    inset: 6px;
+    border: 2px solid rgba(255,255,255,0.5);
+    border-radius: 6px;
+  }
+  .ai-cover-mock svg { width: 20px; height: 20px; }
+
+  /* Weekly Drops: mini calendar */
+  .mini-calendar {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 2px;
+    width: 120px;
+  }
+  .cal-day {
+    width: 14px;
+    height: 14px;
+    border-radius: 4px;
+    background: #eee;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0;
+  }
+  .cal-day.today {
+    background: var(--pink);
+    border: 1.5px solid var(--black);
+  }
+  .cal-day.past {
+    background: #ddd;
+  }
+
+  .feature-title {
+    font-family: var(--font-display);
+    font-weight: 900;
+    font-size: 1.05rem;
+    margin-bottom: 8px;
+  }
+
+  .feature-desc {
+    font-family: var(--font-body);
+    font-size: 0.88rem;
+    line-height: 1.55;
+    color: #555;
+  }
+
+  /* --- FOOTER --- */
+  .footer {
+    padding: 40px 60px;
+    border-top: 3px solid var(--black);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+
+  .footer-brand {
+    font-family: var(--font-display);
+    font-weight: 900;
+    font-size: 1.3rem;
+  }
+
+  .footer-links {
+    display: flex;
+    gap: 24px;
+    list-style: none;
+  }
+
+  .footer-links a {
+    font-family: var(--font-body);
+    font-size: 0.85rem;
+    color: var(--gray);
+    text-decoration: none;
+    font-weight: 500;
+    transition: color 0.15s;
+  }
+  .footer-links a:hover { color: var(--pink); }
+
+  /* ============================
+     ANIMATIONS
+     ============================ */
+
+  @keyframes slideFromLeft {
+    0% { opacity: 0; transform: translateX(-120px); }
+    100% { opacity: 1; transform: translateX(0); }
+  }
+
+  @keyframes fadeUp {
+    0% { opacity: 0; transform: translateY(var(--y, 25px)); }
+    100% { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes cardSlideIn {
+    0% { opacity: 0; transform: translateX(80px) rotate(3.5deg); }
+    100% { opacity: 1; transform: translateX(0) rotate(1.8deg); }
+  }
+
+  @keyframes featureIn {
+    0% { opacity: 0; transform: translateY(40px); }
+    100% { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes featureInRotate {
+    0% { opacity: 0; transform: translateY(40px) rotate(0deg); }
+    100% { opacity: 1; transform: translateY(0) rotate(-1.5deg); }
+  }
+
+  /* ============================
+     RESPONSIVE
+     ============================ */
+  @media (max-width: 768px) {
+    .krunk-word {
+      font-size: 30vw;
+      margin-left: -4vw;
+    }
+
+    .sub-headline {
+      margin: 16px 20px 0;
+      font-size: clamp(1.1rem, 5vw, 1.6rem);
+    }
+
+    .content-area {
+      grid-template-columns: 1fr;
+      padding: 40px 20px 60px;
+      gap: 50px;
+    }
+
+    .left-col { padding-top: 0; }
+    .description { max-width: 100%; }
+
+    .auth-buttons {
+      flex-direction: column;
+    }
+
+    .btn {
+      justify-content: center;
+      width: 100%;
+    }
+
+    .right-col {
+      justify-content: flex-start;
+      margin-right: 0;
+      padding-left: 10px;
+    }
+
+    .queue-card { max-width: 100%; }
+
+    .features {
+      padding: 0 20px 80px;
+    }
+
+    .features-grid {
+      grid-template-columns: 1fr;
+      gap: 16px;
+    }
+
+    .feature-card:nth-child(2) {
+      animation-name: featureIn;
+    }
+
+    .footer {
+      padding: 30px 20px;
+      flex-direction: column;
+      align-items: flex-start;
+    }
+  }
+</style>
+</head>
+<body>
+
+<!-- MASSIVE HEADLINE — bleeds off left edge -->
+<section class="poster-headline">
+  <span class="krunk-word">krun<span>k</span></span>
+  <h2 class="sub-headline">Your friends' ears. <span class="highlight">Your taste.</span></h2>
+</section>
+
+<!-- CONTENT: description + queue card -->
+<section class="content-area">
+  <div class="left-col">
+    <div class="accent-bar"></div>
+    <p class="description">
+      Every week, you and your friends drop a queue &mdash; <strong>5 songs that define your week</strong>.
+      Listen across Spotify and Apple Music. See what your people are feeling.
+      No algorithms. No feeds. Just music from people you actually know.
+    </p>
+    <div class="auth-buttons">
+      <a href="#" class="btn btn-spotify">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z"/></svg>
+        Connect Spotify
+      </a>
+      <a href="#" class="btn btn-apple">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M23.994 6.124a9.23 9.23 0 00-.24-2.19c-.317-1.31-1.062-2.31-2.18-3.043A5.022 5.022 0 0019.2.04 10.49 10.49 0 0017.39 0H6.607a10.632 10.632 0 00-1.808.04A5.1 5.1 0 002.42.886C1.303 1.618.557 2.617.24 3.93a9.206 9.206 0 00-.24 2.19V17.87a9.21 9.21 0 00.24 2.19c.317 1.31 1.062 2.31 2.18 3.043.493.326 1.04.55 1.63.67.482.098.974.148 1.468.148h10.87c.495 0 .986-.05 1.469-.148a5.017 5.017 0 001.63-.67c1.117-.732 1.862-1.732 2.18-3.043a9.23 9.23 0 00.24-2.19V6.124zM17.7 16.432c-.4.612-.8 1.225-1.32 1.73-.34.328-.73.588-1.168.73-.68.22-1.3.08-1.89-.22a2.816 2.816 0 00-1.268-.31 2.869 2.869 0 00-1.298.33c-.62.31-1.25.44-1.93.2a3.572 3.572 0 01-1.17-.74c-.98-.98-1.73-2.12-2.27-3.39-.35-.82-.57-1.68-.62-2.58-.06-1.14.19-2.18.82-3.11a3.979 3.979 0 012.06-1.6 3.16 3.16 0 012.12-.08c.42.13.82.31 1.22.49.29.13.59.12.88 0 .47-.2.94-.39 1.44-.5a3.3 3.3 0 012.54.37c.17.11.17.11.06.27-.68.93-.91 1.98-.66 3.12.25 1.1.88 1.93 1.82 2.52.07.05.07.05.04.12-.27.62-.57 1.22-.94 1.79l.02.01zM12.44 4.73c-.83.07-1.59.35-2.23.9-.51.44-.86.98-1.01 1.64-.02.09-.04.09-.12.07a3.243 3.243 0 01-.05-1.16c.16-.94.63-1.68 1.38-2.25a3.74 3.74 0 012.15-.79c.1-.01.1-.01.1.09.03.5-.02 1-.22 1.5z"/></svg>
+        Connect Apple Music
+      </a>
+    </div>
+    <div class="free-line">Free &middot; No credit card &middot; Takes 10 seconds</div>
+
+    <!-- Avatar tease — "choose your look" -->
+    <div class="avatar-tease">
+      <span class="avatar-tease-label">Choose your look</span>
+      <div class="mini-avatars">
+        <div class="mini-avatar av-pink">
+          <div class="face">
+            <div class="eyes"><span></span><span></span></div>
+            <div class="mouth"></div>
+          </div>
+        </div>
+        <div class="mini-avatar av-black">
+          <div class="face">
+            <div class="eyes"><span style="background:white"></span><span style="background:white"></span></div>
+            <div class="mouth-flat" style="border-color:white"></div>
+          </div>
+        </div>
+        <div class="mini-avatar av-outline">
+          <div class="face">
+            <div class="eyes"><span></span><span></span></div>
+            <div class="mouth-open"></div>
+          </div>
+        </div>
+        <div class="mini-avatar av-gray">
+          <div class="face">
+            <div class="eyes"><span></span><span></span></div>
+            <div class="mouth"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="right-col">
+    <div class="queue-card">
+      <div class="queue-header">
+        <!-- Stylized avatar -->
+        <div class="sender-avatar">
+          <div class="avatar-face">
+            <div class="av-eyes"><span></span><span></span></div>
+            <div class="av-mouth"></div>
+          </div>
+        </div>
+        <div class="queue-header-text">
+          <div class="queue-title">Golden Hour Drive</div>
+          <div class="queue-meta">from Dylan &middot; 4 tracks &middot; dropped 2h ago</div>
+        </div>
+      </div>
+      <ul class="queue-songs">
+        <li class="song">
+          <span class="song-num">1</span>
+          <div class="song-art pink-bg">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="white"><polygon points="5,3 19,12 5,21"/></svg>
+          </div>
+          <div class="song-info">
+            <div class="song-name">Rushing Back</div>
+            <div class="song-artist">Flume ft. Vera Blue</div>
+          </div>
+          <span class="song-duration">4:12</span>
+        </li>
+        <li class="song">
+          <span class="song-num">2</span>
+          <div class="song-art">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="#111"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55C7.79 13 6 14.79 6 17s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg>
+          </div>
+          <div class="song-info">
+            <div class="song-name">On The Floor</div>
+            <div class="song-artist">Perfume Genius</div>
+          </div>
+          <span class="song-duration">3:47</span>
+        </li>
+        <li class="song">
+          <span class="song-num">3</span>
+          <div class="song-art">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="#111"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55C7.79 13 6 14.79 6 17s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg>
+          </div>
+          <div class="song-info">
+            <div class="song-name">Location Unknown</div>
+            <div class="song-artist">HONNE ft. BEKA</div>
+          </div>
+          <span class="song-duration">3:31</span>
+        </li>
+        <li class="song">
+          <span class="song-num">4</span>
+          <div class="song-art">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="#111"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55C7.79 13 6 14.79 6 17s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg>
+          </div>
+          <div class="song-info">
+            <div class="song-name">Sunset Lover</div>
+            <div class="song-artist">Petit Biscuit</div>
+          </div>
+          <span class="song-duration">3:58</span>
+        </li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- FEATURES -->
+<section class="features">
+  <div class="features-label">How it works</div>
+  <div class="features-grid">
+
+    <!-- Cross-platform: overlapping Spotify + Apple Music icons -->
+    <div class="feature-card">
+      <div class="feature-visual">
+        <div class="platform-icons">
+          <div class="platform-icon">
+            <svg viewBox="0 0 24 24" fill="#111"><path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z"/></svg>
+          </div>
+          <div class="platform-icon">
+            <svg viewBox="0 0 24 24" fill="white"><path d="M23.994 6.124a9.23 9.23 0 00-.24-2.19c-.317-1.31-1.062-2.31-2.18-3.043A5.022 5.022 0 0019.2.04 10.49 10.49 0 0017.39 0H6.607a10.632 10.632 0 00-1.808.04A5.1 5.1 0 002.42.886C1.303 1.618.557 2.617.24 3.93a9.206 9.206 0 00-.24 2.19V17.87a9.21 9.21 0 00.24 2.19c.317 1.31 1.062 2.31 2.18 3.043.493.326 1.04.55 1.63.67.482.098.974.148 1.468.148h10.87c.495 0 .986-.05 1.469-.148a5.017 5.017 0 001.63-.67c1.117-.732 1.862-1.732 2.18-3.043a9.23 9.23 0 00.24-2.19V6.124zM17.7 16.432c-.4.612-.8 1.225-1.32 1.73-.34.328-.73.588-1.168.73-.68.22-1.3.08-1.89-.22a2.816 2.816 0 00-1.268-.31 2.869 2.869 0 00-1.298.33c-.62.31-1.25.44-1.93.2a3.572 3.572 0 01-1.17-.74c-.98-.98-1.73-2.12-2.27-3.39-.35-.82-.57-1.68-.62-2.58-.06-1.14.19-2.18.82-3.11a3.979 3.979 0 012.06-1.6 3.16 3.16 0 012.12-.08c.42.13.82.31 1.22.49.29.13.59.12.88 0 .47-.2.94-.39 1.44-.5a3.3 3.3 0 012.54.37c.17.11.17.11.06.27-.68.93-.91 1.98-.66 3.12.25 1.1.88 1.93 1.82 2.52.07.05.07.05.04.12-.27.62-.57 1.22-.94 1.79l.02.01zM12.44 4.73c-.83.07-1.59.35-2.23.9-.51.44-.86.98-1.01 1.64-.02.09-.04.09-.12.07a3.243 3.243 0 01-.05-1.16c.16-.94.63-1.68 1.38-2.25a3.74 3.74 0 012.15-.79c.1-.01.1-.01.1.09.03.5-.02 1-.22 1.5z"/></svg>
+          </div>
+        </div>
+      </div>
+      <div class="feature-title">Cross-platform</div>
+      <p class="feature-desc">Your friend's on Spotify, you're on Apple Music. Doesn't matter. Everyone hears the same queue.</p>
+    </div>
+
+    <!-- AI Covers: tiny mock album art -->
+    <div class="feature-card">
+      <div class="feature-visual">
+        <div class="ai-cover-mock">
+          <svg viewBox="0 0 24 24" fill="white"><path d="M21 3H3c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H3V5h18v14zm-5-7l-3 3.72L10 12l-4 5h16l-6-6z"/></svg>
+        </div>
+      </div>
+      <div class="feature-title">AI Covers</div>
+      <p class="feature-desc">Every queue gets a unique cover generated from the vibe of your tracks. No two weeks look the same.</p>
+    </div>
+
+    <!-- Weekly Drops: mini calendar -->
+    <div class="feature-card">
+      <div class="feature-visual">
+        <div class="mini-calendar">
+          <div class="cal-day past"></div>
+          <div class="cal-day past"></div>
+          <div class="cal-day past"></div>
+          <div class="cal-day past"></div>
+          <div class="cal-day past"></div>
+          <div class="cal-day"></div>
+          <div class="cal-day"></div>
+          <div class="cal-day past"></div>
+          <div class="cal-day past"></div>
+          <div class="cal-day past"></div>
+          <div class="cal-day today"></div>
+          <div class="cal-day"></div>
+          <div class="cal-day"></div>
+          <div class="cal-day"></div>
+        </div>
+      </div>
+      <div class="feature-title">Weekly Drops</div>
+      <p class="feature-desc">Queues reset every week. Drop yours before Sunday midnight. Then listen to what your people picked.</p>
+    </div>
+
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer class="footer">
+  <div class="footer-brand">krunk</div>
+  <ul class="footer-links">
+    <li><a href="#">About</a></li>
+    <li><a href="#">Privacy</a></li>
+    <li><a href="#">@krunkapp</a></li>
+  </ul>
+</footer>
+
+</body>
+</html>

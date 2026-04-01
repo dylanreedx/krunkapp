@@ -1,0 +1,884 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>krunk — dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@400;700;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --pink: #ff2d78;
+    --black: #111;
+    --gray: #888;
+    --white: #ffffff;
+    --font-display: 'Unbounded', sans-serif;
+    --font-body: 'Inter', sans-serif;
+    --border: 3px solid var(--black);
+    --radius: 20px;
+  }
+
+  body {
+    background: var(--white);
+    color: var(--black);
+    font-family: var(--font-body);
+    overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+    padding-bottom: 100px;
+  }
+
+  /* --- TOP BAR --- */
+  .topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 32px;
+    position: sticky;
+    top: 0;
+    background: var(--white);
+    z-index: 100;
+    border-bottom: 3px solid var(--black);
+  }
+
+  .topbar-logo {
+    font-family: var(--font-display);
+    font-weight: 900;
+    font-size: 1.6rem;
+    letter-spacing: -0.02em;
+    text-decoration: none;
+    color: var(--black);
+  }
+
+  .topbar-logo span {
+    color: var(--pink);
+  }
+
+  .topbar-right {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .topbar-avatar {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    border: 3px solid var(--black);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-display);
+    font-weight: 900;
+    font-size: 1rem;
+    background: var(--white);
+    cursor: pointer;
+    transition: transform 0.15s ease;
+  }
+
+  .topbar-avatar:hover {
+    transform: scale(1.08);
+  }
+
+  .topbar-gear {
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    border-radius: 10px;
+    transition: background 0.15s ease;
+  }
+
+  .topbar-gear:hover {
+    background: #f0f0f0;
+  }
+
+  .topbar-gear svg {
+    width: 22px;
+    height: 22px;
+    color: var(--black);
+  }
+
+  /* --- MAIN CONTENT --- */
+  .main {
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 40px 32px 0;
+  }
+
+  /* --- GREETING --- */
+  .greeting {
+    margin-bottom: 32px;
+    opacity: 0;
+    transform: translateY(25px);
+    animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.1s forwards;
+  }
+
+  .greeting h1 {
+    font-family: var(--font-display);
+    font-weight: 900;
+    font-size: clamp(2.2rem, 6vw, 3.4rem);
+    line-height: 1.05;
+    letter-spacing: -0.03em;
+  }
+
+  .greeting .week {
+    font-family: var(--font-body);
+    font-size: 1rem;
+    color: var(--gray);
+    font-weight: 500;
+    margin-top: 6px;
+  }
+
+  /* --- STATS ROW --- */
+  .stats-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    margin-bottom: 40px;
+    opacity: 0;
+    transform: translateY(25px);
+    animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.25s forwards;
+  }
+
+  .stat-card {
+    border: 3px solid var(--black);
+    border-radius: 20px;
+    padding: 22px 20px;
+    text-align: center;
+    transition: transform 0.15s ease;
+  }
+
+  .stat-card:hover {
+    transform: translateY(-3px);
+  }
+
+  .stat-card.accent {
+    background: var(--pink);
+    border-color: var(--pink);
+  }
+
+  .stat-card.accent .stat-num,
+  .stat-card.accent .stat-label {
+    color: var(--white);
+  }
+
+  .stat-num {
+    font-family: var(--font-display);
+    font-weight: 900;
+    font-size: 2.4rem;
+    line-height: 1;
+    color: var(--black);
+  }
+
+  .stat-label {
+    font-family: var(--font-body);
+    font-size: 0.82rem;
+    color: var(--gray);
+    font-weight: 600;
+    margin-top: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  /* --- THIS WEEK FEATURED --- */
+  .featured-card {
+    border: 3px solid var(--black);
+    border-radius: 22px;
+    padding: 28px;
+    display: flex;
+    gap: 24px;
+    align-items: center;
+    transform: rotate(-1deg);
+    margin-bottom: 44px;
+    position: relative;
+    opacity: 0;
+    animation: featuredIn 0.7s cubic-bezier(0.16, 1, 0.3, 1) 0.4s forwards;
+    transition: transform 0.2s ease;
+  }
+
+  .featured-card:hover {
+    transform: rotate(-1deg) translateY(-3px);
+  }
+
+  .featured-card::before {
+    content: 'THIS WEEK';
+    position: absolute;
+    top: -14px;
+    left: 24px;
+    background: var(--pink);
+    color: var(--white);
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 0.7rem;
+    letter-spacing: 0.08em;
+    padding: 5px 14px;
+    border-radius: 10px;
+  }
+
+  .featured-art {
+    width: 110px;
+    height: 110px;
+    border-radius: 16px;
+    border: 3px solid var(--black);
+    background: var(--pink);
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .featured-art svg {
+    width: 40px;
+    height: 40px;
+    color: var(--white);
+  }
+
+  .featured-info {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .featured-name {
+    font-family: var(--font-display);
+    font-weight: 900;
+    font-size: 1.5rem;
+    line-height: 1.2;
+    margin-bottom: 6px;
+  }
+
+  .featured-meta {
+    font-family: var(--font-body);
+    font-size: 0.88rem;
+    color: var(--gray);
+    font-weight: 500;
+    margin-bottom: 14px;
+  }
+
+  .featured-link {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 0.9rem;
+    color: var(--pink);
+    text-decoration: none;
+    transition: opacity 0.15s;
+  }
+
+  .featured-link:hover {
+    opacity: 0.7;
+  }
+
+  /* --- CREATE BUTTON --- */
+  .create-btn-wrap {
+    margin-bottom: 32px;
+    opacity: 0;
+    transform: translateY(20px);
+    animation: slideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.55s forwards;
+  }
+
+  .create-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 1rem;
+    padding: 18px 36px;
+    border-radius: 18px;
+    border: none;
+    background: var(--pink);
+    color: var(--white);
+    cursor: pointer;
+    text-decoration: none;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+  }
+
+  .create-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 24px rgba(255, 45, 120, 0.35);
+  }
+
+  .create-btn:active {
+    transform: translateY(0);
+  }
+
+  /* --- SEGMENTED CONTROL --- */
+  .seg-control {
+    display: inline-flex;
+    border: 3px solid var(--black);
+    border-radius: 100px;
+    padding: 4px;
+    margin-bottom: 28px;
+    opacity: 0;
+    transform: translateY(20px);
+    animation: slideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.6s forwards;
+  }
+
+  .seg-btn {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 0.85rem;
+    padding: 10px 24px;
+    border-radius: 100px;
+    border: none;
+    background: transparent;
+    color: var(--black);
+    cursor: pointer;
+    transition: background 0.2s ease, color 0.2s ease;
+  }
+
+  .seg-btn.active {
+    background: var(--pink);
+    color: var(--white);
+  }
+
+  .seg-btn:not(.active):hover {
+    background: #f0f0f0;
+  }
+
+  /* --- TAB PANELS --- */
+  .tab-panel {
+    display: none;
+  }
+
+  .tab-panel.active {
+    display: block;
+  }
+
+  /* --- QUEUE GRID --- */
+  .queue-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    opacity: 0;
+    transform: translateY(20px);
+    animation: slideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.7s forwards;
+  }
+
+  .queue-card {
+    border: 3px solid var(--black);
+    border-radius: 22px;
+    padding: 22px;
+    background: var(--white);
+    transition: transform 0.15s ease;
+    cursor: pointer;
+    position: relative;
+  }
+
+  .queue-card:hover {
+    transform: translateY(-4px);
+  }
+
+  .queue-card.tilted {
+    transform: rotate(1.2deg);
+  }
+
+  .queue-card.tilted:hover {
+    transform: rotate(1.2deg) translateY(-4px);
+  }
+
+  .queue-card.tilt-neg {
+    transform: rotate(-0.8deg);
+  }
+
+  .queue-card.tilt-neg:hover {
+    transform: rotate(-0.8deg) translateY(-4px);
+  }
+
+  /* Overlapping album art thumbnails */
+  .queue-thumbs {
+    display: flex;
+    margin-bottom: 16px;
+  }
+
+  .queue-thumb {
+    width: 42px;
+    height: 42px;
+    border-radius: 10px;
+    border: 2px solid var(--black);
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.9rem;
+    background: #f0f0f0;
+  }
+
+  .queue-thumb:not(:first-child) {
+    margin-left: -12px;
+  }
+
+  .queue-thumb.th-pink {
+    background: var(--pink);
+    border-color: var(--pink);
+  }
+
+  .queue-thumb.th-dark {
+    background: var(--black);
+    border-color: var(--black);
+  }
+
+  .queue-thumb.th-light {
+    background: #e8e8e8;
+  }
+
+  .queue-card-name {
+    font-family: var(--font-display);
+    font-weight: 900;
+    font-size: 1.1rem;
+    line-height: 1.2;
+    margin-bottom: 6px;
+  }
+
+  .queue-card-meta {
+    font-family: var(--font-body);
+    font-size: 0.8rem;
+    color: var(--gray);
+    font-weight: 500;
+    margin-bottom: 14px;
+  }
+
+  /* Status pills */
+  .pill {
+    display: inline-block;
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 0.7rem;
+    letter-spacing: 0.04em;
+    padding: 5px 14px;
+    border-radius: 100px;
+  }
+
+  .pill-draft {
+    background: #e8e8e8;
+    color: #555;
+  }
+
+  .pill-published {
+    background: var(--pink);
+    color: var(--white);
+  }
+
+  .pill-received {
+    background: var(--black);
+    color: var(--white);
+  }
+
+  /* --- EMPTY STATE --- */
+  .empty-state {
+    text-align: center;
+    padding: 80px 20px;
+  }
+
+  .empty-state h2 {
+    font-family: var(--font-display);
+    font-weight: 900;
+    font-size: clamp(1.6rem, 4vw, 2.4rem);
+    line-height: 1.1;
+    margin-bottom: 12px;
+  }
+
+  .empty-state p {
+    font-family: var(--font-body);
+    font-size: 1rem;
+    color: var(--gray);
+    font-weight: 500;
+    max-width: 360px;
+    margin: 0 auto;
+    line-height: 1.6;
+  }
+
+  /* --- MOBILE BOTTOM NAV --- */
+  .bottom-nav {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: var(--white);
+    border-top: 3px solid var(--black);
+    border-radius: 20px 20px 0 0;
+    display: none;
+    align-items: center;
+    justify-content: space-around;
+    padding: 12px 0 calc(12px + env(safe-area-inset-bottom, 0px));
+    z-index: 200;
+  }
+
+  .nav-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    text-decoration: none;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .nav-item svg {
+    width: 24px;
+    height: 24px;
+    color: var(--gray);
+  }
+
+  .nav-item.active svg {
+    color: var(--pink);
+  }
+
+  .nav-label {
+    font-family: var(--font-body);
+    font-size: 0.65rem;
+    font-weight: 600;
+    color: var(--gray);
+  }
+
+  .nav-item.active .nav-label {
+    color: var(--pink);
+  }
+
+  .nav-create-circle {
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    background: var(--pink);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: -26px;
+    border: 3px solid var(--black);
+    transition: transform 0.15s ease;
+  }
+
+  .nav-create-circle:active {
+    transform: scale(0.92);
+  }
+
+  .nav-create-circle svg {
+    width: 26px;
+    height: 26px;
+    color: var(--white);
+  }
+
+  /* --- ANIMATIONS --- */
+  @keyframes slideUp {
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes featuredIn {
+    to {
+      opacity: 1;
+      transform: rotate(-1deg) translateY(0);
+    }
+  }
+
+  /* --- RESPONSIVE --- */
+  @media (max-width: 768px) {
+    .topbar {
+      padding: 16px 20px;
+    }
+
+    .main {
+      padding: 28px 20px 0;
+    }
+
+    .greeting h1 {
+      font-size: clamp(1.8rem, 8vw, 2.6rem);
+    }
+
+    .stats-row {
+      gap: 10px;
+    }
+
+    .stat-card {
+      padding: 16px 12px;
+      border-radius: 16px;
+    }
+
+    .stat-num {
+      font-size: 1.8rem;
+    }
+
+    .stat-label {
+      font-size: 0.72rem;
+    }
+
+    .featured-card {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 16px;
+      padding: 22px;
+    }
+
+    .featured-art {
+      width: 80px;
+      height: 80px;
+    }
+
+    .featured-name {
+      font-size: 1.25rem;
+    }
+
+    .queue-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .queue-card.tilted,
+    .queue-card.tilt-neg {
+      transform: none;
+    }
+
+    .queue-card.tilted:hover,
+    .queue-card.tilt-neg:hover {
+      transform: translateY(-4px);
+    }
+
+    .seg-btn {
+      font-size: 0.78rem;
+      padding: 9px 18px;
+    }
+
+    .create-btn {
+      width: 100%;
+      justify-content: center;
+    }
+
+    body {
+      padding-bottom: 120px;
+    }
+
+    .bottom-nav {
+      display: flex;
+    }
+
+    .create-btn-wrap {
+      display: none;
+    }
+  }
+
+  @media (max-width: 420px) {
+    .stat-card {
+      padding: 14px 8px;
+      border-radius: 14px;
+    }
+
+    .stat-num {
+      font-size: 1.5rem;
+    }
+
+    .seg-btn {
+      padding: 8px 14px;
+      font-size: 0.72rem;
+    }
+  }
+</style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<header class="topbar">
+  <a href="#" class="topbar-logo">krun<span>k</span></a>
+  <div class="topbar-right">
+    <div class="topbar-gear">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="3"></circle>
+        <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"></path>
+      </svg>
+    </div>
+    <div class="topbar-avatar">D</div>
+  </div>
+</header>
+
+<main class="main">
+
+  <!-- GREETING + STATS -->
+  <div class="greeting">
+    <h1>Hey Dylan</h1>
+    <div class="week">Week of March 31</div>
+  </div>
+
+  <div class="stats-row">
+    <div class="stat-card">
+      <div class="stat-num">7</div>
+      <div class="stat-label">Queues Sent</div>
+    </div>
+    <div class="stat-card accent">
+      <div class="stat-num">34</div>
+      <div class="stat-label">Songs Shared</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num">4</div>
+      <div class="stat-label">Friends</div>
+    </div>
+  </div>
+
+  <!-- THIS WEEK FEATURED -->
+  <div class="featured-card">
+    <div class="featured-art">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M9 18V5l12-2v13"></path>
+        <circle cx="6" cy="18" r="3"></circle>
+        <circle cx="18" cy="16" r="3"></circle>
+      </svg>
+    </div>
+    <div class="featured-info">
+      <div class="featured-name">Midnight Static</div>
+      <div class="featured-meta">Draft &middot; 3 songs</div>
+      <a href="#" class="featured-link">Continue editing &rarr;</a>
+    </div>
+  </div>
+
+  <!-- CREATE BUTTON (desktop) -->
+  <div class="create-btn-wrap">
+    <a href="#" class="create-btn">New queue +</a>
+  </div>
+
+  <!-- SEGMENTED CONTROL -->
+  <div class="seg-control">
+    <button class="seg-btn active" data-tab="drafts">Drafts</button>
+    <button class="seg-btn" data-tab="sent">Sent</button>
+    <button class="seg-btn" data-tab="received">Received</button>
+  </div>
+
+  <!-- TAB: DRAFTS -->
+  <div class="tab-panel active" id="tab-drafts">
+    <div class="queue-grid">
+
+      <div class="queue-card tilted">
+        <div class="queue-thumbs">
+          <div class="queue-thumb th-pink"></div>
+          <div class="queue-thumb th-dark"></div>
+          <div class="queue-thumb th-light"></div>
+        </div>
+        <div class="queue-card-name">Midnight Static</div>
+        <div class="queue-card-meta">Week of Mar 31 &middot; 3 songs</div>
+        <span class="pill pill-draft">Draft</span>
+      </div>
+
+      <div class="queue-card">
+        <div class="queue-thumbs">
+          <div class="queue-thumb th-light"></div>
+          <div class="queue-thumb th-pink"></div>
+          <div class="queue-thumb th-light"></div>
+        </div>
+        <div class="queue-card-name">Rooftop Signals</div>
+        <div class="queue-card-meta">Week of Mar 24 &middot; 2 songs</div>
+        <span class="pill pill-draft">Draft</span>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- TAB: SENT -->
+  <div class="tab-panel" id="tab-sent">
+    <div class="queue-grid">
+
+      <div class="queue-card tilt-neg">
+        <div class="queue-thumbs">
+          <div class="queue-thumb th-dark"></div>
+          <div class="queue-thumb th-pink"></div>
+          <div class="queue-thumb th-light"></div>
+        </div>
+        <div class="queue-card-name">Golden Hour Drive</div>
+        <div class="queue-card-meta">Week of Mar 24 &middot; 5 songs</div>
+        <span class="pill pill-published">Published</span>
+      </div>
+
+      <div class="queue-card tilted">
+        <div class="queue-thumbs">
+          <div class="queue-thumb th-light"></div>
+          <div class="queue-thumb th-dark"></div>
+          <div class="queue-thumb th-pink"></div>
+        </div>
+        <div class="queue-card-name">4am Comedown</div>
+        <div class="queue-card-meta">Week of Mar 17 &middot; 5 songs</div>
+        <span class="pill pill-published">Published</span>
+      </div>
+
+      <div class="queue-card">
+        <div class="queue-thumbs">
+          <div class="queue-thumb th-pink"></div>
+          <div class="queue-thumb th-light"></div>
+          <div class="queue-thumb th-dark"></div>
+        </div>
+        <div class="queue-card-name">Asphalt Hymns</div>
+        <div class="queue-card-meta">Week of Mar 10 &middot; 4 songs</div>
+        <span class="pill pill-published">Published</span>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- TAB: RECEIVED -->
+  <div class="tab-panel" id="tab-received">
+    <div class="empty-state">
+      <h2>No received queues yet</h2>
+      <p>When friends send you music, it'll show up here.</p>
+    </div>
+  </div>
+
+</main>
+
+<!-- MOBILE BOTTOM NAV -->
+<nav class="bottom-nav">
+  <a class="nav-item active" href="#">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"></path>
+      <polyline points="9 22 9 12 15 12 15 22"></polyline>
+    </svg>
+    <span class="nav-label">Home</span>
+  </a>
+  <a class="nav-item" href="#">
+    <div class="nav-create-circle">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="12" y1="5" x2="12" y2="19"></line>
+        <line x1="5" y1="12" x2="19" y2="12"></line>
+      </svg>
+    </div>
+    <span class="nav-label">Create</span>
+  </a>
+  <a class="nav-item" href="#">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="12" cy="12" r="3"></circle>
+      <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"></path>
+    </svg>
+    <span class="nav-label">Settings</span>
+  </a>
+</nav>
+
+<script>
+  // Tab switching
+  const segBtns = document.querySelectorAll('.seg-btn');
+  const panels = document.querySelectorAll('.tab-panel');
+
+  segBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      const tab = btn.dataset.tab;
+
+      segBtns.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+
+      panels.forEach(p => {
+        p.classList.remove('active');
+        if (p.id === 'tab-' + tab) {
+          p.classList.add('active');
+          // Re-trigger grid animation
+          const grid = p.querySelector('.queue-grid');
+          if (grid) {
+            grid.style.animation = 'none';
+            grid.offsetHeight; // reflow
+            grid.style.animation = '';
+          }
+        }
+      });
+    });
+  });
+</script>
+
+</body>
+</html>

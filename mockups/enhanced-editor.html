@@ -1,0 +1,1240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>krunk — edit queue</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@400;700;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --pink: #ff2d78;
+    --black: #111;
+    --gray: #888;
+    --light-gray: #e5e5e5;
+    --white: #ffffff;
+    --font-display: 'Unbounded', sans-serif;
+    --font-body: 'Inter', sans-serif;
+    --border: 3px solid var(--black);
+    --radius: 20px;
+  }
+
+  body {
+    background: var(--white);
+    color: var(--black);
+    font-family: var(--font-body);
+    overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+    padding-bottom: 40px;
+  }
+
+  /* --- DOT GRID BACKGROUND --- */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    background-image: radial-gradient(circle, var(--black) 1px, transparent 1px);
+    background-size: 28px 28px;
+    opacity: 0.04;
+    pointer-events: none;
+  }
+
+  /* --- TOP BAR --- */
+  .top-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 18px 24px;
+    border-bottom: 3px solid var(--black);
+    position: sticky;
+    top: 0;
+    background: var(--white);
+    z-index: 100;
+  }
+
+  .back-link {
+    font-family: var(--font-body);
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: var(--black);
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: color 0.15s;
+    min-width: 120px;
+  }
+
+  .back-link:hover { color: var(--pink); }
+
+  .back-link svg { width: 18px; height: 18px; }
+
+  .top-brand {
+    font-family: var(--font-display);
+    font-weight: 900;
+    font-size: 1.2rem;
+    letter-spacing: -0.02em;
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+  }
+
+  .top-brand span { color: var(--pink); }
+
+  .song-count-pill {
+    background: var(--pink);
+    color: var(--white);
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 0.72rem;
+    padding: 6px 14px;
+    border-radius: 100px;
+    letter-spacing: 0.02em;
+    min-width: 120px;
+    text-align: right;
+  }
+
+  /* --- MAIN CONTENT --- */
+  .main {
+    max-width: 620px;
+    margin: 0 auto;
+    padding: 32px 24px 0;
+  }
+
+  /* --- WEEK STRIP + COUNTDOWN --- */
+  .week-strip-section {
+    margin-bottom: 32px;
+    opacity: 0;
+    transform: translateY(20px);
+    animation: slideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.05s forwards;
+  }
+
+  .week-strip {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    margin-bottom: 14px;
+  }
+
+  .week-day {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 0.72rem;
+    border: 3px solid var(--light-gray);
+    color: var(--gray);
+    transition: all 0.3s;
+    opacity: 0;
+    transform: scale(0.7);
+  }
+
+  .week-day.today {
+    background: var(--black);
+    color: var(--white);
+    border-color: var(--black);
+  }
+
+  .week-day.drop-day {
+    background: var(--pink);
+    color: var(--white);
+    border-color: var(--pink);
+    animation: pulse-drop 2s ease-in-out infinite;
+  }
+
+  .week-day.past {
+    border-color: var(--light-gray);
+    color: #ccc;
+  }
+
+  @keyframes pulse-drop {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(255, 45, 120, 0.4); }
+    50% { box-shadow: 0 0 0 8px rgba(255, 45, 120, 0); }
+  }
+
+  .countdown-text {
+    text-align: center;
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 1.05rem;
+    color: var(--black);
+    margin-bottom: 4px;
+  }
+
+  .countdown-text em {
+    font-style: normal;
+    color: var(--pink);
+  }
+
+  .drop-early-link {
+    display: block;
+    text-align: center;
+    font-family: var(--font-body);
+    font-size: 0.78rem;
+    color: #bbb;
+    text-decoration: none;
+    font-weight: 500;
+    transition: color 0.15s;
+  }
+
+  .drop-early-link:hover { color: var(--pink); }
+
+  /* --- QUEUE HEADER --- */
+  .queue-header {
+    margin-bottom: 28px;
+    opacity: 0;
+    transform: translateY(20px);
+    animation: slideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.15s forwards;
+  }
+
+  .queue-heading {
+    font-family: var(--font-display);
+    font-weight: 900;
+    font-size: clamp(1.8rem, 5vw, 2.4rem);
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+    margin-bottom: 8px;
+  }
+
+  .queue-subtitle {
+    font-family: var(--font-body);
+    font-size: 0.95rem;
+    color: var(--gray);
+    font-weight: 500;
+  }
+
+  /* --- DROP ZONE (HERO) --- */
+  .drop-zone-wrapper {
+    margin-bottom: 32px;
+    opacity: 0;
+    transform: translateY(20px);
+    animation: slideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.25s forwards;
+  }
+
+  .drop-zone {
+    border: 3px dashed var(--pink);
+    border-radius: 22px;
+    padding: 44px 32px;
+    text-align: center;
+    cursor: pointer;
+    transition: background 0.3s, border-color 0.3s;
+    position: relative;
+    overflow: hidden;
+    animation: breathe 3s ease-in-out infinite;
+  }
+
+  @keyframes breathe {
+    0%, 100% { border-color: rgba(255, 45, 120, 0.5); }
+    50% { border-color: rgba(255, 45, 120, 1); }
+  }
+
+  .drop-zone:hover {
+    background: rgba(255, 45, 120, 0.03);
+  }
+
+  .drop-zone.resolving {
+    background: rgba(255, 45, 120, 0.08);
+    border-color: var(--pink);
+    animation: none;
+  }
+
+  .drop-zone-icon {
+    width: 48px;
+    height: 48px;
+    margin: 0 auto 16px;
+    border-radius: 50%;
+    background: rgba(255, 45, 120, 0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .drop-zone-icon svg {
+    width: 24px;
+    height: 24px;
+    color: var(--pink);
+  }
+
+  .drop-zone-title {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 1.15rem;
+    margin-bottom: 8px;
+    color: var(--black);
+  }
+
+  .drop-zone-subtitle {
+    font-family: var(--font-body);
+    font-size: 0.88rem;
+    color: var(--gray);
+    font-weight: 500;
+    margin-bottom: 0;
+  }
+
+  .drop-zone-subtitle kbd {
+    font-family: var(--font-body);
+    font-size: 0.78rem;
+    background: #f0f0f0;
+    border: 2px solid var(--light-gray);
+    border-radius: 6px;
+    padding: 2px 8px;
+    font-weight: 600;
+    color: var(--black);
+  }
+
+  .type-link {
+    display: inline-block;
+    margin-top: 14px;
+    font-family: var(--font-body);
+    font-size: 0.78rem;
+    color: var(--gray);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    cursor: pointer;
+    transition: color 0.15s;
+  }
+
+  .type-link:hover { color: var(--pink); }
+
+  /* Resolving state content */
+  .resolving-content {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+  }
+
+  .resolving .drop-zone-default { display: none; }
+  .resolving .resolving-content { display: flex; }
+
+  .resolving-spinner {
+    width: 24px;
+    height: 24px;
+    border: 3px solid var(--light-gray);
+    border-top-color: var(--pink);
+    border-radius: 50%;
+    animation: spin 0.6s linear infinite;
+  }
+
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+
+  .resolving-text {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 0.95rem;
+    color: var(--pink);
+  }
+
+  /* Fallback input */
+  .fallback-input-wrapper {
+    display: none;
+    margin-top: 16px;
+  }
+
+  .fallback-input-wrapper.visible { display: block; }
+
+  .fallback-input-box {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    border: 3px solid var(--black);
+    border-radius: 18px;
+    padding: 4px 4px 4px 20px;
+    background: var(--white);
+  }
+
+  .fallback-input {
+    flex: 1;
+    border: none;
+    outline: none;
+    font-family: var(--font-body);
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: var(--black);
+    background: transparent;
+    padding: 12px 0;
+    min-width: 0;
+  }
+
+  .fallback-input::placeholder { color: #ccc; }
+
+  .fallback-add-btn {
+    flex-shrink: 0;
+    background: var(--pink);
+    color: var(--white);
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 0.88rem;
+    border: none;
+    border-radius: 13px;
+    padding: 12px 24px;
+    cursor: pointer;
+    transition: transform 0.12s;
+  }
+
+  .fallback-add-btn:hover { transform: scale(1.04); }
+  .fallback-add-btn:active { transform: scale(0.97); }
+
+  /* --- MOBILE CLIPBOARD TOAST --- */
+  .clipboard-toast {
+    display: none;
+    position: fixed;
+    top: 80px;
+    left: 16px;
+    right: 16px;
+    max-width: 620px;
+    margin: 0 auto;
+    background: var(--white);
+    border: 3px solid var(--black);
+    border-radius: 18px;
+    padding: 16px 18px;
+    z-index: 200;
+    align-items: center;
+    gap: 14px;
+    transform: translateY(-20px);
+    opacity: 0;
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .clipboard-toast.show {
+    display: flex;
+    transform: translateY(0);
+    opacity: 1;
+  }
+
+  .toast-emoji {
+    font-size: 1.4rem;
+    flex-shrink: 0;
+  }
+
+  .toast-text {
+    flex: 1;
+    font-family: var(--font-body);
+    font-size: 0.88rem;
+    font-weight: 600;
+    line-height: 1.35;
+  }
+
+  .toast-text strong {
+    color: var(--pink);
+    font-weight: 700;
+  }
+
+  .toast-actions {
+    display: flex;
+    gap: 8px;
+    flex-shrink: 0;
+  }
+
+  .toast-btn {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 0.72rem;
+    padding: 8px 16px;
+    border-radius: 10px;
+    cursor: pointer;
+    border: none;
+    transition: transform 0.1s;
+  }
+
+  .toast-btn:active { transform: scale(0.95); }
+
+  .toast-btn-add {
+    background: var(--pink);
+    color: var(--white);
+  }
+
+  .toast-btn-dismiss {
+    background: #f0f0f0;
+    color: var(--gray);
+  }
+
+  /* --- SONG LIST --- */
+  .song-list-section {
+    margin-bottom: 36px;
+    opacity: 0;
+    transform: translateY(20px);
+    animation: slideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.4s forwards;
+  }
+
+  .song-list-container {
+    border: 3px solid var(--black);
+    border-radius: 22px;
+    overflow: hidden;
+  }
+
+  .song-row {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 16px 18px;
+    position: relative;
+    transition: background 0.12s;
+    opacity: 0;
+    transform: translateX(-30px);
+  }
+
+  .song-row:hover { background: #fafafa; }
+  .song-row:hover .remove-btn { opacity: 1; }
+
+  .song-row + .song-row { border-top: 1px solid var(--light-gray); }
+
+  .song-pos {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: var(--pink);
+    color: var(--white);
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 0.75rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .song-art {
+    width: 48px;
+    height: 48px;
+    border-radius: 14px;
+    border: 3px solid var(--black);
+    flex-shrink: 0;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .song-art.art-blue { background: #c5e3ff; }
+  .song-art.art-orange { background: #ffd6b0; }
+  .song-art.art-purple { background: #e0d0ff; }
+  .song-art.art-green { background: #c8f7d5; }
+
+  .song-art svg { width: 20px; height: 20px; opacity: 0.4; }
+
+  .song-details { flex: 1; min-width: 0; }
+
+  .song-title {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 0.92rem;
+    line-height: 1.25;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .song-artist {
+    font-family: var(--font-body);
+    font-size: 0.8rem;
+    color: var(--gray);
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  /* Flame early drop toggle */
+  .flame-toggle {
+    flex-shrink: 0;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    background: none;
+    cursor: pointer;
+    font-size: 1.1rem;
+    border-radius: 8px;
+    transition: all 0.15s;
+    filter: grayscale(1) opacity(0.3);
+  }
+
+  .flame-toggle:hover { filter: grayscale(0.5) opacity(0.6); }
+
+  .flame-toggle.active {
+    filter: none;
+    animation: flame-pop 0.3s ease;
+  }
+
+  @keyframes flame-pop {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.3); }
+    100% { transform: scale(1); }
+  }
+
+  .drag-handle {
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    cursor: grab;
+    padding: 4px;
+    opacity: 0.2;
+    transition: opacity 0.15s;
+  }
+
+  .song-row:hover .drag-handle { opacity: 0.5; }
+
+  .drag-handle span { display: flex; gap: 3px; }
+
+  .drag-handle span i {
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: var(--black);
+    display: block;
+  }
+
+  .remove-btn {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    border: none;
+    background: #f0f0f0;
+    color: var(--gray);
+    font-size: 0.75rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 0.15s, background 0.12s, color 0.12s;
+    line-height: 1;
+  }
+
+  .remove-btn:hover { background: var(--pink); color: var(--white); }
+
+  .keep-adding {
+    text-align: center;
+    padding: 20px 16px;
+    font-family: var(--font-body);
+    font-size: 0.82rem;
+    color: #bbb;
+    font-weight: 500;
+    border-top: 1px solid var(--light-gray);
+  }
+
+  /* New song flash animation */
+  @keyframes song-slide-in {
+    0% {
+      opacity: 0;
+      transform: translateX(-40px);
+      background: rgba(255, 45, 120, 0.08);
+    }
+    60% {
+      opacity: 1;
+      transform: translateX(0);
+      background: rgba(255, 45, 120, 0.08);
+    }
+    100% {
+      opacity: 1;
+      transform: translateX(0);
+      background: transparent;
+    }
+  }
+
+  .song-row.new-song {
+    animation: song-slide-in 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+
+  /* --- RECIPIENTS --- */
+  .recipients-section {
+    margin-bottom: 32px;
+    opacity: 0;
+    transform: translateY(20px);
+    animation: slideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.55s forwards;
+  }
+
+  .section-heading {
+    font-family: var(--font-display);
+    font-weight: 900;
+    font-size: 1.1rem;
+    margin-bottom: 18px;
+  }
+
+  .section-heading .count { color: var(--gray); font-weight: 700; }
+
+  .recipients-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    align-items: flex-start;
+  }
+
+  .recipient-avatar-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    cursor: default;
+  }
+
+  .avatar-circle {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    border: 3px solid var(--black);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    flex-shrink: 0;
+    transition: transform 0.15s;
+  }
+
+  .avatar-circle:hover { transform: scale(1.08); }
+
+  .avatar-circle.av-pink { background: #ffe0ec; }
+  .avatar-circle.av-blue { background: #d0e8ff; }
+  .avatar-circle.av-yellow { background: #fff3c4; }
+  .avatar-circle.av-green { background: #d0f5dd; }
+
+  .avatar-name {
+    font-family: var(--font-body);
+    font-weight: 600;
+    font-size: 0.78rem;
+    color: var(--black);
+    text-align: center;
+  }
+
+  .add-friend-circle {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+  }
+
+  .add-friend-circle .avatar-circle {
+    border: 3px dashed var(--gray);
+    color: var(--gray);
+    font-size: 1.4rem;
+    transition: border-color 0.15s, color 0.15s, transform 0.15s;
+    background: none;
+  }
+
+  .add-friend-circle:hover .avatar-circle {
+    border-color: var(--pink);
+    color: var(--pink);
+    transform: scale(1.08);
+  }
+
+  .add-friend-circle .avatar-name { color: var(--gray); }
+  .add-friend-circle:hover .avatar-name { color: var(--pink); }
+
+  /* Add friend expanded sheet */
+  .add-friend-sheet {
+    display: none;
+    margin-top: 16px;
+    border: 3px solid var(--black);
+    border-radius: 22px;
+    padding: 24px;
+    background: var(--white);
+    transform-origin: top center;
+    animation: sheet-expand 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+
+  .add-friend-sheet.visible { display: block; }
+
+  @keyframes sheet-expand {
+    from { opacity: 0; transform: scaleY(0.8); }
+    to { opacity: 1; transform: scaleY(1); }
+  }
+
+  .sheet-title {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 0.95rem;
+    margin-bottom: 14px;
+  }
+
+  .phone-input-row {
+    display: flex;
+    gap: 10px;
+  }
+
+  .phone-input {
+    flex: 1;
+    border: 3px solid var(--black);
+    border-radius: 14px;
+    padding: 14px 18px;
+    font-family: var(--font-body);
+    font-size: 0.95rem;
+    font-weight: 500;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+
+  .phone-input:focus { border-color: var(--pink); }
+  .phone-input::placeholder { color: #ccc; }
+
+  .phone-send-btn {
+    flex-shrink: 0;
+    background: var(--pink);
+    color: var(--white);
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 0.82rem;
+    border: none;
+    border-radius: 14px;
+    padding: 14px 22px;
+    cursor: pointer;
+    transition: transform 0.12s;
+  }
+
+  .phone-send-btn:hover { transform: scale(1.04); }
+
+  /* --- AI PREVIEW TEASER --- */
+  .ai-preview-card {
+    border: 3px solid var(--black);
+    border-radius: 20px;
+    padding: 22px 24px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 36px;
+    transform: rotate(-0.6deg);
+    opacity: 0;
+    animation: slideUpRotated 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.65s forwards;
+  }
+
+  .ai-art-placeholder {
+    width: 52px;
+    height: 52px;
+    border-radius: 14px;
+    border: 3px solid var(--black);
+    background: linear-gradient(135deg, #ffe0ec 0%, #e0d0ff 50%, #c5e3ff 100%);
+    flex-shrink: 0;
+    filter: blur(2px);
+    opacity: 0.7;
+  }
+
+  .ai-preview-body { flex: 1; }
+
+  .ai-preview-text {
+    font-family: var(--font-body);
+    font-size: 0.88rem;
+    color: var(--gray);
+    line-height: 1.45;
+    font-weight: 500;
+    margin-bottom: 4px;
+  }
+
+  .ai-preview-link {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 0.78rem;
+    color: var(--pink);
+    text-decoration: none;
+    cursor: pointer;
+    transition: opacity 0.15s;
+  }
+
+  .ai-preview-link:hover { opacity: 0.7; }
+
+  /* --- ANIMATIONS --- */
+  @keyframes slideUp {
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes slideUpRotated {
+    to { opacity: 1; transform: translateY(0) rotate(-0.6deg); }
+  }
+
+  /* Staggered song row entrance */
+  .song-row:nth-child(1) { animation: song-stagger 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.5s forwards; }
+  .song-row:nth-child(2) { animation: song-stagger 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.6s forwards; }
+  .song-row:nth-child(3) { animation: song-stagger 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.7s forwards; }
+
+  @keyframes song-stagger {
+    to { opacity: 1; transform: translateX(0); }
+  }
+
+  /* Week day stagger */
+  .week-day:nth-child(1) { animation: day-pop 0.35s cubic-bezier(0.16, 1, 0.3, 1) 0.1s forwards; }
+  .week-day:nth-child(2) { animation: day-pop 0.35s cubic-bezier(0.16, 1, 0.3, 1) 0.15s forwards; }
+  .week-day:nth-child(3) { animation: day-pop 0.35s cubic-bezier(0.16, 1, 0.3, 1) 0.2s forwards; }
+  .week-day:nth-child(4) { animation: day-pop 0.35s cubic-bezier(0.16, 1, 0.3, 1) 0.25s forwards; }
+  .week-day:nth-child(5) { animation: day-pop 0.35s cubic-bezier(0.16, 1, 0.3, 1) 0.3s forwards; }
+  .week-day:nth-child(6) { animation: day-pop 0.35s cubic-bezier(0.16, 1, 0.3, 1) 0.35s forwards; }
+  .week-day:nth-child(7) { animation: day-pop 0.35s cubic-bezier(0.16, 1, 0.3, 1) 0.4s forwards; }
+
+  @keyframes day-pop {
+    to { opacity: 1; transform: scale(1); }
+  }
+
+  /* Countdown tick */
+  @keyframes tick {
+    0%, 100% { transform: translateY(0); }
+    10% { transform: translateY(-2px); }
+    20% { transform: translateY(0); }
+  }
+
+  .countdown-text {
+    animation: tick 4s ease-in-out infinite;
+  }
+
+  /* --- RESPONSIVE --- */
+  @media (max-width: 640px) {
+    .top-bar { padding: 14px 16px; }
+    .back-link { min-width: auto; font-size: 0.82rem; }
+    .back-link .back-text { display: none; }
+    .song-count-pill { min-width: auto; }
+    .main { padding: 24px 16px 0; }
+    .queue-heading { font-size: 1.7rem; }
+
+    .week-day { width: 38px; height: 38px; font-size: 0.65rem; }
+    .week-strip { gap: 6px; }
+
+    .drop-zone { padding: 32px 24px; }
+    .drop-zone-title { font-size: 1rem; }
+
+    .song-row { padding: 14px 14px; gap: 10px; }
+    .song-art { width: 42px; height: 42px; }
+    .song-title { font-size: 0.85rem; }
+
+    .avatar-circle { width: 48px; height: 48px; font-size: 1.3rem; }
+    .avatar-name { font-size: 0.72rem; }
+
+    .ai-preview-card {
+      flex-direction: column;
+      text-align: center;
+      gap: 14px;
+    }
+
+    .ai-art-placeholder { margin: 0 auto; }
+  }
+</style>
+</head>
+<body>
+
+<!-- MOBILE CLIPBOARD TOAST -->
+<div class="clipboard-toast" id="clipboardToast">
+  <div class="toast-emoji">&#x1F4CB;</div>
+  <div class="toast-text">Spotify link detected &mdash; Add <strong>&lsquo;Retrograde&rsquo;</strong>?</div>
+  <div class="toast-actions">
+    <button class="toast-btn toast-btn-add" onclick="addFromClipboard()">Add</button>
+    <button class="toast-btn toast-btn-dismiss" onclick="dismissToast()">Nah</button>
+  </div>
+</div>
+
+<!-- TOP BAR -->
+<header class="top-bar">
+  <a href="#" class="back-link">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+    <span class="back-text">Dashboard</span>
+  </a>
+  <div class="top-brand">krun<span>k</span></div>
+  <div class="song-count-pill" id="songCountPill">3 songs</div>
+</header>
+
+<!-- MAIN CONTENT -->
+<main class="main">
+
+  <!-- WEEK STRIP + COUNTDOWN -->
+  <div class="week-strip-section">
+    <div class="week-strip">
+      <div class="week-day past">M</div>
+      <div class="week-day today">T</div>
+      <div class="week-day">W</div>
+      <div class="week-day">T</div>
+      <div class="week-day drop-day">F</div>
+      <div class="week-day">S</div>
+      <div class="week-day">S</div>
+    </div>
+    <div class="countdown-text">Drops in <em>3 days</em></div>
+    <a href="#" class="drop-early-link">Drop early</a>
+  </div>
+
+  <!-- QUEUE HEADER -->
+  <div class="queue-header">
+    <h1 class="queue-heading">This week's queue</h1>
+    <div class="queue-subtitle">Week of March 31</div>
+  </div>
+
+  <!-- DROP ZONE (HERO) -->
+  <div class="drop-zone-wrapper">
+    <div class="drop-zone" id="dropZone">
+      <div class="drop-zone-default">
+        <div class="drop-zone-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M9 18V5l12-2v13"/>
+            <circle cx="6" cy="18" r="3"/>
+            <circle cx="18" cy="16" r="3"/>
+          </svg>
+        </div>
+        <div class="drop-zone-title">Paste a link anywhere</div>
+        <div class="drop-zone-subtitle"><kbd>&#8984;V</kbd> or drop a link</div>
+        <div class="type-link" onclick="showFallbackInput()">or type a link</div>
+      </div>
+      <div class="resolving-content">
+        <div class="resolving-spinner"></div>
+        <div class="resolving-text">Resolving song...</div>
+      </div>
+    </div>
+    <div class="fallback-input-wrapper" id="fallbackInput">
+      <div class="fallback-input-box">
+        <input type="text" class="fallback-input" placeholder="https://open.spotify.com/track/...">
+        <button class="fallback-add-btn" onclick="addFromFallback()">Add</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- SONG LIST -->
+  <div class="song-list-section">
+    <div class="song-list-container">
+
+      <!-- Song 1 -->
+      <div class="song-row">
+        <div class="song-pos">1</div>
+        <div class="song-art art-blue">
+          <svg viewBox="0 0 24 24" fill="var(--black)"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55C7.79 13 6 14.79 6 17s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg>
+        </div>
+        <div class="song-details">
+          <div class="song-title">Midnight City</div>
+          <div class="song-artist">M83</div>
+        </div>
+        <button class="flame-toggle active" onclick="toggleFlame(this)" title="Early drop">&#x1F525;</button>
+        <div class="drag-handle">
+          <span><i></i><i></i></span>
+          <span><i></i><i></i></span>
+          <span><i></i><i></i></span>
+        </div>
+        <button class="remove-btn">&times;</button>
+      </div>
+
+      <!-- Song 2 -->
+      <div class="song-row">
+        <div class="song-pos">2</div>
+        <div class="song-art art-orange">
+          <svg viewBox="0 0 24 24" fill="var(--black)"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55C7.79 13 6 14.79 6 17s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg>
+        </div>
+        <div class="song-details">
+          <div class="song-title">Tadow</div>
+          <div class="song-artist">Masego & FKJ</div>
+        </div>
+        <button class="flame-toggle" onclick="toggleFlame(this)" title="Early drop">&#x1F525;</button>
+        <div class="drag-handle">
+          <span><i></i><i></i></span>
+          <span><i></i><i></i></span>
+          <span><i></i><i></i></span>
+        </div>
+        <button class="remove-btn">&times;</button>
+      </div>
+
+      <!-- Song 3 -->
+      <div class="song-row">
+        <div class="song-pos">3</div>
+        <div class="song-art art-purple">
+          <svg viewBox="0 0 24 24" fill="var(--black)"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55C7.79 13 6 14.79 6 17s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg>
+        </div>
+        <div class="song-details">
+          <div class="song-title">Nights</div>
+          <div class="song-artist">Frank Ocean</div>
+        </div>
+        <button class="flame-toggle" onclick="toggleFlame(this)" title="Early drop">&#x1F525;</button>
+        <div class="drag-handle">
+          <span><i></i><i></i></span>
+          <span><i></i><i></i></span>
+          <span><i></i><i></i></span>
+        </div>
+        <button class="remove-btn">&times;</button>
+      </div>
+
+      <!-- Keep adding prompt -->
+      <div class="keep-adding">Keep adding songs until Friday</div>
+
+    </div>
+  </div>
+
+  <!-- RECIPIENTS -->
+  <div class="recipients-section">
+    <h2 class="section-heading">Sending to <span class="count">(3)</span></h2>
+    <div class="recipients-grid">
+      <div class="recipient-avatar-card">
+        <div class="avatar-circle av-pink">&#x1F60E;</div>
+        <div class="avatar-name">Jamie</div>
+      </div>
+      <div class="recipient-avatar-card">
+        <div class="avatar-circle av-blue">&#x1F3B5;</div>
+        <div class="avatar-name">Kai</div>
+      </div>
+      <div class="recipient-avatar-card">
+        <div class="avatar-circle av-yellow">&#x1F525;</div>
+        <div class="avatar-name">Priya</div>
+      </div>
+      <div class="add-friend-circle" onclick="toggleAddFriend()">
+        <div class="avatar-circle">+</div>
+        <div class="avatar-name">Add</div>
+      </div>
+    </div>
+    <div class="add-friend-sheet" id="addFriendSheet">
+      <div class="sheet-title">Add by phone number</div>
+      <div class="phone-input-row">
+        <input type="tel" class="phone-input" placeholder="+1 (555) 000-0000">
+        <button class="phone-send-btn">Send</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- AI PREVIEW TEASER -->
+  <div class="ai-preview-card">
+    <div class="ai-art-placeholder"></div>
+    <div class="ai-preview-body">
+      <div class="ai-preview-text">Cover art & name drop with your queue on Friday</div>
+      <a class="ai-preview-link" href="#">Preview &rarr;</a>
+    </div>
+  </div>
+
+</main>
+
+<script>
+  // --- CLIPBOARD-FIRST PASTE DETECTION ---
+  const dropZone = document.getElementById('dropZone');
+  const songList = document.querySelector('.song-list-container');
+  const songCountPill = document.getElementById('songCountPill');
+  const keepAdding = document.querySelector('.keep-adding');
+
+  const mockSongs = [
+    { title: 'Retrograde', artist: 'James Blake', color: 'art-green' },
+    { title: 'Do I Wanna Know?', artist: 'Arctic Monkeys', color: 'art-blue' },
+    { title: 'Redbone', artist: 'Childish Gambino', color: 'art-orange' },
+  ];
+  let mockIndex = 0;
+
+  function isLikelyMusicURL(text) {
+    return /spotify\.com|music\.apple\.com|soundcloud\.com|youtu/i.test(text);
+  }
+
+  // Listen for paste ANYWHERE on the page
+  document.addEventListener('paste', function(e) {
+    const text = (e.clipboardData || window.clipboardData).getData('text');
+    if (text && (isLikelyMusicURL(text) || text.startsWith('http'))) {
+      e.preventDefault();
+      simulateResolve();
+    }
+  });
+
+  // Drag and drop on drop zone
+  dropZone.addEventListener('dragover', function(e) {
+    e.preventDefault();
+    dropZone.style.background = 'rgba(255, 45, 120, 0.06)';
+  });
+
+  dropZone.addEventListener('dragleave', function() {
+    dropZone.style.background = '';
+  });
+
+  dropZone.addEventListener('drop', function(e) {
+    e.preventDefault();
+    dropZone.style.background = '';
+    simulateResolve();
+  });
+
+  function simulateResolve() {
+    dropZone.classList.add('resolving');
+
+    setTimeout(function() {
+      dropZone.classList.remove('resolving');
+      addSongToList();
+    }, 1200);
+  }
+
+  function addSongToList() {
+    const song = mockSongs[mockIndex % mockSongs.length];
+    mockIndex++;
+
+    const count = songList.querySelectorAll('.song-row').length + 1;
+
+    const row = document.createElement('div');
+    row.className = 'song-row new-song';
+    row.innerHTML = `
+      <div class="song-pos">${count}</div>
+      <div class="song-art ${song.color}">
+        <svg viewBox="0 0 24 24" fill="var(--black)"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55C7.79 13 6 14.79 6 17s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg>
+      </div>
+      <div class="song-details">
+        <div class="song-title">${song.title}</div>
+        <div class="song-artist">${song.artist}</div>
+      </div>
+      <button class="flame-toggle" onclick="toggleFlame(this)" title="Early drop">&#x1F525;</button>
+      <div class="drag-handle">
+        <span><i></i><i></i></span>
+        <span><i></i><i></i></span>
+        <span><i></i><i></i></span>
+      </div>
+      <button class="remove-btn">&times;</button>
+    `;
+
+    songList.insertBefore(row, keepAdding);
+    songCountPill.textContent = count + ' songs';
+  }
+
+  // --- FALLBACK INPUT ---
+  function showFallbackInput() {
+    document.getElementById('fallbackInput').classList.toggle('visible');
+  }
+
+  function addFromFallback() {
+    const input = document.querySelector('.fallback-input');
+    if (input.value.trim()) {
+      simulateResolve();
+      input.value = '';
+    }
+  }
+
+  // --- FLAME TOGGLE ---
+  function toggleFlame(el) {
+    el.classList.toggle('active');
+  }
+
+  // --- ADD FRIEND SHEET ---
+  function toggleAddFriend() {
+    document.getElementById('addFriendSheet').classList.toggle('visible');
+  }
+
+  // --- CLIPBOARD TOAST (MOBILE SIMULATION) ---
+  // Simulate mobile clipboard detection on page load after a delay
+  function showMobileToast() {
+    const toast = document.getElementById('clipboardToast');
+    toast.classList.add('show');
+    // Auto-dismiss after 6 seconds
+    setTimeout(function() {
+      if (toast.classList.contains('show')) dismissToast();
+    }, 6000);
+  }
+
+  function dismissToast() {
+    const toast = document.getElementById('clipboardToast');
+    toast.style.opacity = '0';
+    toast.style.transform = 'translateY(-20px)';
+    setTimeout(() => { toast.classList.remove('show'); toast.style.opacity = ''; toast.style.transform = ''; }, 300);
+  }
+
+  function addFromClipboard() {
+    dismissToast();
+    simulateResolve();
+  }
+
+  // Show mobile toast after 2s to simulate "page focus with clipboard"
+  setTimeout(showMobileToast, 2000);
+</script>
+
+</body>
+</html>
