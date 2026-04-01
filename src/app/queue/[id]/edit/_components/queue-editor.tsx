@@ -148,7 +148,12 @@ export function QueueEditor({
         </section>
 
         {/* AI preview */}
-        <AiPreview queueId={queueId} songCount={queue.songs.length} />
+        <AiPreview
+          queueId={queueId}
+          songCount={queue.songs.length}
+          initialAiName={queue.aiName}
+          initialCoverUrl={queue.aiCoverUrl}
+        />
 
         {/* Drop early link (replaces publish button) */}
         {isDraft && !publish.isPending && (
@@ -278,14 +283,20 @@ const BLUR_STYLES: { id: BlurStyle; label: string; filter: string }[] = [
 function AiPreview({
   queueId,
   songCount,
+  initialAiName,
+  initialCoverUrl,
 }: {
   queueId: string;
   songCount: number;
+  initialAiName?: string | null;
+  initialCoverUrl?: string | null;
 }) {
   const [preview, setPreview] = useState<{
     aiName: string;
     coverImageUrl?: string;
-  } | null>(null);
+  } | null>(
+    initialAiName ? { aiName: initialAiName, coverImageUrl: initialCoverUrl ?? undefined } : null,
+  );
   const [loading, setLoading] = useState(false);
   const [hasRerolled, setHasRerolled] = useState(false);
   const [showRerollConfirm, setShowRerollConfirm] = useState(false);

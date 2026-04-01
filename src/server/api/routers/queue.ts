@@ -783,6 +783,12 @@ export const queueRouter = createTRPCRouter({
           coverImageUrl = `data:image/webp;base64,${coverImageBuffer.toString("base64")}`;
         }
 
+        // Persist to queue record so it survives page refresh
+        await ctx.db
+          .update(queue)
+          .set({ aiName, aiCoverUrl: coverImageUrl ?? null })
+          .where(eq(queue.id, input.queueId));
+
         return { aiName, coverImageUrl };
       } catch (err) {
         console.error("AI preview failed:", err);
