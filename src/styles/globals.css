@@ -104,4 +104,17 @@
     font-family: var(--font-display);
     @apply font-bold;
   }
+
+  button, [role="button"] {
+    cursor: pointer;
+  }
+
+  button:hover:not(:disabled), [role="button"]:hover:not(:disabled) {
+    opacity: 0.9;
+  }
+
+  button:disabled {
+    cursor: not-allowed;
+    opacity: 0.4;
+  }
 }
