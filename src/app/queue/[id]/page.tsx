@@ -63,6 +63,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       title: data.aiName ?? "Queue",
       description,
       type: "music.playlist",
+      url: `https://getkrunk.app/queue/${id}`,
+      siteName: "Krunk",
       ...(data.aiCoverUrl
         ? {
             images: [
