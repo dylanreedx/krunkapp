@@ -54,19 +54,35 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     data.creator?.displayName ?? data.creator?.name ?? "Someone";
   const description = `${songCount} song${songCount !== 1 ? "s" : ""} from ${senderName}`;
 
+  const coverAlt = `Cover art for ${data.aiName ?? "queue"}`;
+
   return {
-    title: `${data.aiName ?? "Queue"} | Krunk`,
+    title: data.aiName ?? "Queue",
     description,
     openGraph: {
       title: data.aiName ?? "Queue",
       description,
-      ...(data.aiCoverUrl ? { images: [{ url: data.aiCoverUrl }] } : {}),
+      type: "music.playlist",
+      ...(data.aiCoverUrl
+        ? {
+            images: [
+              {
+                url: data.aiCoverUrl,
+                width: 512,
+                height: 512,
+                alt: coverAlt,
+              },
+            ],
+          }
+        : {}),
     },
     twitter: {
       card: "summary_large_image",
       title: data.aiName ?? "Queue",
       description,
-      ...(data.aiCoverUrl ? { images: [data.aiCoverUrl] } : {}),
+      ...(data.aiCoverUrl
+        ? { images: [{ url: data.aiCoverUrl, alt: coverAlt }] }
+        : {}),
     },
   };
 }
@@ -137,6 +153,7 @@ export default async function QueueViewPage({ params }: Props) {
           <DraftPreview
             senderName={senderName}
             senderAvatarId={senderAvatarId}
+            aiName={data.aiName}
             aiCoverUrl={data.aiCoverUrl}
             songs={data.songs.map((s) => ({ id: s.id, albumArtUrl: s.albumArtUrl }))}
             songCount={data.songs.length}
