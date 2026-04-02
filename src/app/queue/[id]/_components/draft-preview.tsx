@@ -9,6 +9,7 @@ import { authClient } from "@/server/better-auth/client";
 export function DraftPreview({
   senderName,
   senderAvatarId,
+  aiName,
   aiCoverUrl,
   songs,
   songCount,
@@ -17,6 +18,7 @@ export function DraftPreview({
 }: {
   senderName: string;
   senderAvatarId: string;
+  aiName: string | null;
   aiCoverUrl: string | null;
   songs: { id: string; albumArtUrl: string | null }[];
   songCount: number;
@@ -75,7 +77,7 @@ export function DraftPreview({
             blurred
             interactive
             className="mx-auto"
-            title={`${songCount} song${songCount !== 1 ? "s" : ""}`}
+            title={aiName ?? "Untitled Queue"}
             subtitle={`Week of ${weekDate}`}
           />
         ) : (
