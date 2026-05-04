@@ -361,53 +361,57 @@ function AiPreview({
           </div>
         )}
 
-        {/* Result */}
+        {/* Result — matches listener view but blurred/hidden */}
         {preview && !loading && (
           <div>
-            <div className="flex items-start gap-4 max-sm:flex-col max-sm:items-center max-sm:text-center">
-              {/* Cover art — holographic with blur */}
-              <div className={`shrink-0 max-sm:mx-auto ${flipAnim ? "animate-[flip_0.7s_ease-out]" : ""} ${shakeAnim ? "animate-[shake_0.5s_ease-in-out]" : ""}`}>
+            <div className={`flex flex-col items-center ${flipAnim ? "animate-[flip_0.7s_ease-out]" : ""} ${shakeAnim ? "animate-[shake_0.5s_ease-in-out]" : ""}`}>
+              {/* Cover art — full size, blurred like listener draft view */}
+              <div className="relative w-full max-w-[280px]">
                 {preview.coverImageUrl ? (
                   <HoloCover
                     src={preview.coverImageUrl}
-                    size={110}
+                    size={280}
                     blurred
                     interactive
+                    className="mx-auto"
+                    title="Hidden until drop day"
+                    subtitle="Your listeners will love it"
                   />
                 ) : (
-                  <div className="flex h-[110px] w-[110px] items-center justify-center rounded-[18px] border-3 border-black bg-gray-100">
-                    <Sparkle weight="duotone" size={32} className="text-gray-300" />
+                  <div className="mx-auto flex aspect-square w-full max-w-[280px] items-center justify-center rounded-[24px] border-3 border-black bg-gray-100">
+                    <Sparkle weight="duotone" size={40} className="text-gray-300" />
                   </div>
                 )}
+
+                {/* Track count badge — matches listener view */}
+                <div className="absolute -right-1.5 top-4 z-[3] -rotate-[8deg] rounded-full border-3 border-black bg-pink px-3.5 py-1.5 font-display text-[0.68rem] font-bold tracking-wide text-white">
+                  {songCount} track{songCount !== 1 ? "s" : ""}
+                </div>
               </div>
 
-              <div className="flex-1">
-                <p className="font-display text-lg font-black leading-tight">
-                  &ldquo;{preview.aiName}&rdquo;
+              <p className="mt-4 font-body text-xs text-gray-400">
+                Cover & name hidden until drop day
+              </p>
+            </div>
+
+            {/* Reroll */}
+            <div className="mt-5 flex justify-center">
+              {!hasRerolled && !showRerollConfirm && (
+                <button
+                  type="button"
+                  onClick={() => setShowRerollConfirm(true)}
+                  className="inline-flex items-center gap-2 rounded-[var(--radius-md)] border-2 border-dashed border-gray-300 px-3.5 py-2 font-display text-[11px] font-bold text-gray-400 transition-all hover:border-pink hover:text-pink"
+                >
+                  <Sparkle weight="bold" size={12} />
+                  Reroll (1 left)
+                </button>
+              )}
+
+              {hasRerolled && (
+                <p className="font-display text-[11px] font-bold text-gray-300">
+                  No rerolls left
                 </p>
-                <p className="mt-1 font-body text-xs text-gray-500">
-                  Full reveal on drop day
-                </p>
-
-
-                {/* Reroll — dramatic, scarce */}
-                {!hasRerolled && !showRerollConfirm && (
-                  <button
-                    type="button"
-                    onClick={() => setShowRerollConfirm(true)}
-                    className="mt-4 inline-flex items-center gap-2 rounded-[var(--radius-md)] border-2 border-dashed border-gray-300 px-3.5 py-2 font-display text-[11px] font-bold text-gray-400 transition-all hover:border-pink hover:text-pink"
-                  >
-                    <Sparkle weight="bold" size={12} />
-                    Reroll (1 left)
-                  </button>
-                )}
-
-                {hasRerolled && (
-                  <p className="mt-4 font-display text-[11px] font-bold text-gray-300">
-                    No rerolls left
-                  </p>
-                )}
-              </div>
+              )}
             </div>
 
             {/* Reroll confirmation — feels consequential */}

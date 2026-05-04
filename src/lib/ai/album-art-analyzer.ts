@@ -12,6 +12,7 @@ export interface AlbumArtAnalysis {
   mood: string;          // "ethereal, melancholic, digital"
   aesthetic: string;     // "minimalist, glitchy, cloud rap"
   dominantColors: string; // "charcoal, deep blue, white"
+  energy: string;        // "intense, kinetic" or "still, brooding"
 }
 
 /**
@@ -32,6 +33,7 @@ export async function analyzeAlbumArt(
       mood: "atmospheric, introspective",
       aesthetic: "minimalist, modern",
       dominantColors: "black, white, gray",
+      energy: "intense, kinetic",
     };
   }
 
@@ -56,7 +58,8 @@ export async function analyzeAlbumArt(
 COLOR PALETTE: [describe the overall color palette across all covers, e.g. "dark moody tones with neon pink and electric blue accents"]
 MOOD: [3-4 mood words, e.g. "ethereal, melancholic, digital, intimate"]
 AESTHETIC: [2-3 aesthetic descriptors, e.g. "hyperpop, lo-fi digital, cloud rap"]
-DOMINANT COLORS: [3-4 specific colors, e.g. "charcoal, lavender, electric pink, white"]`,
+DOMINANT COLORS: [3-4 specific colors, e.g. "charcoal, lavender, electric pink, white"]
+ENERGY: [2-3 words describing motion/intensity, e.g. "frenetic, explosive" or "still, contemplative"]`,
           },
         ],
       },
@@ -76,5 +79,6 @@ DOMINANT COLORS: [3-4 specific colors, e.g. "charcoal, lavender, electric pink, 
     mood: extract("MOOD") || "atmospheric, introspective",
     aesthetic: extract("AESTHETIC") || "modern, electronic",
     dominantColors: extract("DOMINANT COLORS") || "black, white",
+    energy: extract("ENERGY") || "intense, kinetic",
   };
 }

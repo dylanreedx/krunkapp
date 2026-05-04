@@ -44,6 +44,7 @@ interface TestResult {
     mood: string;
     aesthetic: string;
     dominantColors: string;
+    energy: string;
   };
   queueName: string;
   visualPrompt: string;
